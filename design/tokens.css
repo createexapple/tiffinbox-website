@@ -1,0 +1,135 @@
+/* Tiffin Box design tokens (Stage 1). Source of truth for the prototype and for Stage 2 (src/styles).
+   Every text/background pair used is checked by design/contrast-check.mjs (WCAG 2.1 AA).
+   Rules: gold #F2B441 is NEVER text or an edge/border on cream or white (1.7:1). Gold is a fill with a dark-green label,
+   or text/ring on deep green only. Brown #A9561A text only on cream-50 / white (not on sunken cream: use brown-800). */
+
+:root {
+  /* ---- Brand palette (from the brief) ---- */
+  --green-800: #1F5134;   /* deep green, main brand */
+  --green-900: #163D27;   /* pressed / footer */
+  --green-100: #E3EEE7;   /* tint */
+  --gold-500:  #F2B441;   /* accent fill */
+  --gold-100:  #FDF0D0;   /* tint for notes / prototype banner */
+  --cream-50:  #FAF6EE;   /* page background */
+  --cream-100: #F2EBDC;   /* sunken areas */
+  --cream-200: #E4DAC3;   /* decorative dividers only (not 3:1) */
+  --white:     #FFFFFF;
+  --brown-600: #A9561A;   /* warm brown highlights (text on cream-50 / white only) */
+  --brown-800: #7A3C0E;   /* brown text on tinted backgrounds */
+
+  /* ---- Neutrals ---- */
+  --ink-900: #1D2A22;
+  --ink-700: #3F4B43;
+  --ink-600: #55615A;
+  --line-strong: #76705F; /* input borders, 3:1+ on white and cream */
+
+  /* ---- Status colours (text / background pairs) ---- */
+  --ok-fg:   #14602F; --ok-bg:   #DDF1E4;
+  --warn-fg: #7A4A00; --warn-bg: #FFEFC7;
+  --err-fg:  #A3221B; --err-bg:  #FBE4E1;
+  --info-fg: #1F4E79; --info-bg: #E1ECF7;
+  --neut-fg: #3F4B43; --neut-bg: #ECE6D8;
+
+  /* ---- Semantic tokens (use these in components) ---- */
+  --bg: var(--cream-50);
+  --surface: var(--white);
+  --surface-sunken: var(--cream-100);
+  --text: var(--ink-900);
+  --text-muted: var(--ink-600);
+  --text-strong: var(--green-800);     /* headings, links */
+  --text-accent: var(--brown-600);     /* eyebrows; on --bg and --surface only */
+  --text-accent-on-sunken: var(--brown-800);
+  --link: var(--green-800);
+  --primary: var(--green-800);         /* primary + WhatsApp buttons */
+  --primary-hover: var(--green-900);
+  --on-primary: var(--cream-50);
+  --accent: var(--gold-500);           /* fill only */
+  --on-accent: var(--green-900);
+  --accent-tint: var(--gold-100);
+  --on-accent-tint: var(--brown-800);
+  --brand-band: var(--green-800);      /* hero/footer bands */
+  --on-brand-band: var(--cream-50);
+  --on-brand-band-accent: var(--gold-500);
+  --on-brand-band-muted: var(--cream-200);
+  --footer-bg: var(--green-900);
+  --border: var(--cream-200);          /* decorative */
+  --border-strong: var(--line-strong); /* form controls */
+  --focus: var(--green-800);
+  --focus-on-band: var(--gold-500);
+  --danger: var(--err-fg);
+  --on-danger: var(--white);
+  --shadow-1: 0 1px 2px rgba(29,42,34,.08), 0 2px 8px rgba(29,42,34,.06);
+  --shadow-2: 0 4px 16px rgba(29,42,34,.14);
+  --scrim: rgba(15,27,21,.55);
+
+  /* ---- Type ---- */
+  --font-head: "Space Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; /* bold only */
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* rem-based so browser text-size / large-text settings scale everything */
+  --fs-xs: .8125rem;   /* 13 */
+  --fs-sm: .875rem;    /* 14 */
+  --fs-base: 1rem;     /* 16 */
+  --fs-lg: 1.125rem;   /* 18 */
+  --fs-xl: 1.25rem;    /* 20 */
+  --fs-2xl: 1.5rem;    /* 24 */
+  --fs-3xl: clamp(1.75rem, 1.4rem + 1.6vw, 2.25rem);  /* 28 -> 36 */
+  --fs-4xl: clamp(2.25rem, 1.6rem + 3vw, 3.5rem);     /* 36 -> 56 */
+  --lh-tight: 1.15; --lh-snug: 1.3; --lh-body: 1.6;
+
+  /* ---- Spacing (4px base) ---- */
+  --sp-1: .25rem; --sp-2: .5rem; --sp-3: .75rem; --sp-4: 1rem; --sp-5: 1.25rem;
+  --sp-6: 1.5rem; --sp-8: 2rem; --sp-10: 2.5rem; --sp-12: 3rem; --sp-16: 4rem; --sp-20: 5rem;
+  --gutter: 1rem;            /* 16px at 360 */
+  --container: 72rem;        /* 1152px */
+  --container-narrow: 44rem;
+
+  /* ---- Radius ---- */
+  --r-sm: .375rem; --r-md: .75rem; --r-lg: 1.25rem; --r-pill: 999px;
+
+  /* ---- Touch targets ---- */
+  --tap: 2.75rem;            /* 44px minimum */
+  --tap-lg: 3rem;            /* 48px for primary actions */
+}
+
+@media (min-width: 48em) { :root { --gutter: 1.5rem; } }
+@media (min-width: 80em) { :root { --gutter: 2rem; } }
+
+/* ---- Dark mode (proposal, not requested in the PRD; follows the OS, override with data-theme) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1B15; --surface: #17271E; --surface-sunken: #1F3328;
+    --text: #F3EEE1; --text-muted: #B8C4BB; --text-strong: #8FD0A6;
+    --text-accent: #F0A56A; --text-accent-on-sunken: #F0A56A;
+    --link: #8FD0A6;
+    --primary: #1F5134; --primary-hover: #2A6A45; --on-primary: #FAF6EE;
+    --accent: #F2B441; --on-accent: #143823;
+    --accent-tint: #3C3015; --on-accent-tint: #F5CF73;
+    --brand-band: #17271E; --on-brand-band: #F3EEE1; --on-brand-band-accent: #F2B441; --on-brand-band-muted: #B8C4BB;
+    --footer-bg: #0B1510;
+    --border: #2B4235; --border-strong: #7F9487;
+    --focus: #F2B441; --focus-on-band: #F2B441;
+    --danger: #FF9C93; --on-danger: #442220;
+    --ok-fg: #8EDBA7; --ok-bg: #1E3B2A; --warn-fg: #F5CF73; --warn-bg: #3C3015;
+    --err-fg: #FF9C93; --err-bg: #442220; --info-fg: #9CC7F0; --info-bg: #1D3248;
+    --neut-fg: #D5DDD7; --neut-bg: #2B3B31;
+    --shadow-1: none; --shadow-2: 0 4px 16px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F1B15; --surface: #17271E; --surface-sunken: #1F3328;
+  --text: #F3EEE1; --text-muted: #B8C4BB; --text-strong: #8FD0A6;
+  --text-accent: #F0A56A; --text-accent-on-sunken: #F0A56A;
+  --link: #8FD0A6;
+  --primary: #1F5134; --primary-hover: #2A6A45; --on-primary: #FAF6EE;
+  --accent: #F2B441; --on-accent: #143823;
+  --accent-tint: #3C3015; --on-accent-tint: #F5CF73;
+  --brand-band: #17271E; --on-brand-band: #F3EEE1; --on-brand-band-accent: #F2B441; --on-brand-band-muted: #B8C4BB;
+  --footer-bg: #0B1510;
+  --border: #2B4235; --border-strong: #7F9487;
+  --focus: #F2B441; --focus-on-band: #F2B441;
+  --danger: #FF9C93; --on-danger: #442220;
+  --ok-fg: #8EDBA7; --ok-bg: #1E3B2A; --warn-fg: #F5CF73; --warn-bg: #3C3015;
+  --err-fg: #FF9C93; --err-bg: #442220; --info-fg: #9CC7F0; --info-bg: #1D3248;
+  --neut-fg: #D5DDD7; --neut-bg: #2B3B31;
+  --shadow-1: none; --shadow-2: 0 4px 16px rgba(0,0,0,.5);
+}
