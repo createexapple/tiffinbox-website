@@ -1,7 +1,7 @@
 # Createex Tech — Standard Project Lifecycle
 
 Every stage ends with: deliverables committed + tagged, `/milestone-approval` report, STOP for CEO decision
-(APPROVE / REQUEST CHANGES / HOLD). The decision is the CEO's GitHub PR review on the tagged commit, verified with `scripts/verify-approval.sh` and indexed in `approvals/APPROVALS.md`.
+(APPROVE / REQUEST CHANGES / HOLD). The decision is the CEO's GitHub PR review on the tagged commit (or the CEO's own merge of the milestone PR), verified with `scripts/verify-approval.sh` and indexed in `approvals/APPROVALS.md`.
 
 | Stage | Lead agents | Deliverables (must exist before the gate) | Gate tag |
 |---|---|---|---|

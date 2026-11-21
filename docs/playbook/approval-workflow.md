@@ -16,7 +16,7 @@ Verified 2026-10-18 against the GitHub API on `createex/createex-ai-agency`.
 |---|---|---|
 | Production credentials held only by the CEO (section 4) | **Active once the CEO completes section 4** | Preventive |
 | Store release rights held only by the CEO account (section 5) | **Active once roles are set in each console** | Preventive |
-| CEO approval = PR review by `aliSabirDogar` on an exact commit; only that account can create it | **Active** — GitHub attributes reviews to the account that wrote them | Evidence |
+| CEO approval = PR review by `aliSabirDogar` on an exact commit, or a merge of the milestone PR by `aliSabirDogar`; only that account can create either | **Active** — GitHub attributes reviews and merges to the account that performed them | Evidence |
 | `scripts/verify-approval.sh` checks the review, the commit and staleness | **Active** | Verification |
 | `scripts/verify-approval.sh --audit` lists merges to `main` without a valid CEO approval | **Active** — run weekly | Detective |
 | Branch protection / rulesets on private repos | **Not available** — API returns "Upgrade to GitHub Pro or make this repository public" | — |
@@ -29,8 +29,13 @@ the credentials for those are not in GitHub or with the operator.
 
 ## 2. What counts as a CEO approval
 
-Exactly one thing: an **APPROVED pull-request review by `aliSabirDogar`**, on the milestone PR, whose reviewed commit
-is the exact deliverable commit, and with no newer commits pushed to the PR after the review.
+Either of two things, both created only by the `aliSabirDogar` account on the milestone PR:
+
+1. An **APPROVED pull-request review by `aliSabirDogar`** whose reviewed commit is the exact deliverable commit, with
+   no newer commits pushed to the PR after the review. This is the preferred form.
+2. A **merge of the milestone PR performed by `aliSabirDogar`** (GitHub records `merged_by`), when the CEO left no
+   review on that PR. The approved commit is the PR head at merge. Added by CEO instruction on 2026-11-21. A merge by
+   any other account is not an approval, and a CEO merge does not override the CEO's own "Request changes" review.
 
 - WhatsApp, email, calls or chat messages are **instructions to prepare**, not approvals. The Engineering Lead replies
   "please approve PR <link> on GitHub".
@@ -38,7 +43,7 @@ is the exact deliverable commit, and with no newer commits pushed to the PR afte
   verifiable review is invalid, whatever it says.
 - Claude never writes a decision into the log on its own; it runs `verify-approval.sh` and records only what it returns.
 - REQUEST CHANGES = a "Request changes" review by the CEO. HOLD = a PR comment by the CEO containing `HOLD`
-  (Claude stops all stage work on that project until a later APPROVED review).
+  (Claude stops all stage work on that project until a later approval).
 - An approval covers only the reviewed commit. Any new commit on the PR makes it **stale** and needs a fresh review.
 
 ## 3. Stage-gate procedure
