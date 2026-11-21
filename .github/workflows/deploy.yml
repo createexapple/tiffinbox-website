@@ -1,0 +1,23 @@
+# Staging deploy only. There is deliberately NO production job and NO production secret in GitHub:
+# on GitHub Free, private-repo environments can't require reviewers, so production is deployed by the CEO
+# with CEO-held credentials (docs/playbook/production-release-runbook.md).
+name: Deploy staging / build release
+on:
+  push:
+    branches: [develop]
+    tags: ['release-*']
+jobs:
+  staging:
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to staging
+        run: echo "TODO(devops-engineer) add staging deploy steps using staging-only secrets" && exit 1
+  release-artifact:
+    if: startsWith(github.ref, 'refs/tags/release-')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build release artifact + checksum for the CEO
+        run: echo "TODO(devops-engineer) build, then sha256sum the artifact and upload it" && exit 1

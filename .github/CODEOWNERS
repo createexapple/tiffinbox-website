@@ -1,0 +1,3 @@
+# Auto-requests the CEO's review on every PR. On GitHub Free this is NOT enforced (no branch protection on private repos);
+# it becomes enforceable after a GitHub Team upgrade + ruleset. See docs/playbook/approval-workflow.md.
+* @aliSabirDogar

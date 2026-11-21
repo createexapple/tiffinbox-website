@@ -1,0 +1,12 @@
+# QA Checklist (Stage 2 partial, Stage 4 full)
+- [ ] Every PRD acceptance criterion mapped to ≥1 test or a documented manual check (`docs/traceability.md`)
+- [ ] Unit tests run — command + output saved to `docs/test-results/<date>-unit.txt`
+- [ ] API tests run against staging/local — output saved
+- [ ] E2E tests for critical journeys — output + screenshots saved
+- [ ] Regression suite re-run after fixes
+- [ ] Responsive: phone small/large, tablet, desktop breakpoints checked (screenshots)
+- [ ] Loading / empty / error / offline states checked
+- [ ] Performance: cold start, key screen load, API p95 recorded
+- [ ] Real-device test done **by a human** (device, OS, tester name, date recorded)
+- [ ] All open bugs triaged in `docs/bugs.md` (severity, steps, status)
+- [ ] Nothing reported as passing that was not actually executed

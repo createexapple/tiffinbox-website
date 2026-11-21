@@ -1,0 +1,11 @@
+# Release & Deployment Checklist (Stage 5)
+- [ ] Release candidate tag approved in APPROVALS.md (Stage 4)
+- [ ] Staging deploy from the same commit succeeded; smoke test passed
+- [ ] DB backup taken and restore tested (record time + location)
+- [ ] Migrations dry-run on staging copy; rollback migration exists
+- [ ] Rollback procedure written and tested on staging
+- [ ] Monitoring + alerting live (uptime, errors, logs)
+- [ ] No production secrets in GitHub or the repo; production values held in the CEO's vault
+- [ ] Release PR approved by `aliSabirDogar` and `scripts/verify-approval.sh` = PASS on the release commit
+- [ ] Artifact checksum in the PR; CEO executes the deploy per `production-release-runbook.md`
+- [ ] Post-deploy smoke test + record in `docs/deployments.md`

@@ -1,0 +1,11 @@
+# Security Checklist
+- [ ] No secrets in repo or git history (`git log -p | grep -iE "key|secret|password"` + gitleaks if available)
+- [ ] AuthN: password hashing (argon2/bcrypt), token expiry/refresh, logout invalidation
+- [ ] AuthZ: every endpoint checks role/ownership server-side; IDOR tested
+- [ ] Input validation + output encoding; SQL/NoSQL injection checked; file upload limits/types
+- [ ] Rate limiting on login, OTP, password reset, public APIs
+- [ ] CORS restricted; security headers (web); HTTPS only
+- [ ] Firebase/Supabase rules / RLS reviewed — no open read/write
+- [ ] Dependency audit (`npm audit`, `flutter pub outdated`) — criticals resolved or accepted in writing
+- [ ] Mobile: no secrets in app bundle; secure storage for tokens; cert/obfuscation decision recorded
+- [ ] Logs contain no PII/tokens; backups encrypted; least-privilege service accounts

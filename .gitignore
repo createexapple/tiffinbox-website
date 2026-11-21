@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+*.keystore
+*.jks
+key.properties
+*.p8
+*.p12
+*.mobileprovision
+*service-account*.json
+node_modules/
+build/
+dist/
+.dart_tool/
+.DS_Store
