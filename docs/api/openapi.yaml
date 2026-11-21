@@ -1,0 +1,585 @@
+openapi: 3.0.3
+info:
+  title: Tiffin Box website + admin - HTTP surface (outline)
+  version: 0.1.0-draft
+  description: |
+    Stage 0 OUTLINE ONLY. Nothing here is implemented or tested.
+
+    This project has NO custom REST API (docs/architecture.md, ADR-0001, ADR-0002).
+    The admin dashboard changes data through Next.js server actions, which are
+    framework-internal calls, not public HTTP endpoints, and are therefore not
+    listed as paths. They are catalogued under `x-server-actions` at the bottom.
+
+    The HTTP surface that really exists is:
+      1. Two route handlers in the web app (tag: app).
+      2. Database functions we write, exposed by Supabase at /rest/v1/rpc/* (tag: rpc).
+         They are called server-to-server by the web app. They are listed because they
+         are reachable over HTTPS by anyone who has the project URL and public key,
+         so their authorisation is part of the contract.
+      3. Supabase's own generated endpoints: table access at /rest/v1/<table>,
+         Auth at /auth/v1/*, Storage at /storage/v1/*. These are vendor-defined and
+         not redefined here. Table access is governed by row-level security:
+         the public role has no table grants; active admins have the rights in
+         docs/architecture.md section 7. Supabase publishes the generated table
+         spec at /rest/v1/ ; export it at Stage 3 instead of hand-writing it.
+
+    Update this file in the same PR as any change to a route handler or database function.
+servers:
+  - url: https://{appHost}
+    description: Web app (route handlers)
+    variables:
+      appHost:
+        default: staging.example.invalid
+  - url: https://{supabaseProject}.supabase.co
+    description: Supabase project (rpc paths)
+    variables:
+      supabaseProject:
+        default: project-ref
+tags:
+  - name: app
+    description: Route handlers in the Next.js app
+  - name: rpc
+    description: PostgreSQL functions exposed through Supabase PostgREST
+paths:
+  /api/health:
+    get:
+      tags: [app]
+      summary: Liveness check for uptime monitoring
+      description: Returns 200 when the web app is running. Does not call the backend and returns no data about content or customers.
+      security: []
+      responses:
+        '200':
+          description: App is up
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+  /api/revalidate:
+    post:
+      tags: [app]
+      summary: Refresh cached public pages
+      description: Called by the Supabase Cron go-live notifier (and usable in the post-deploy smoke test). Admin publishing refreshes the cache inside its server action and does not need this endpoint. Rate limited.
+      security:
+        - revalidateSecret: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevalidateRequest'
+      responses:
+        '200':
+          description: Cache refresh requested
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevalidateResult'
+        '401':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+  /rest/v1/rpc/get_public_content:
+    post:
+      tags: [rpc]
+      summary: Published site content plus the live menu week
+      description: The only database object the public role may use. Returns no draft content and no customer, subscription or payment data.
+      security:
+        - supabaseKey: []
+      responses:
+        '200':
+          description: Published content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicContent'
+  /rest/v1/rpc/get_draft_content:
+    post:
+      tags: [rpc]
+      summary: Draft content for preview (admin only)
+      security:
+        - supabaseKey: []
+          adminJwt: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                menu_week_id:
+                  type: string
+                  format: uuid
+                  description: Menu week to preview; defaults to the live week's working copy
+      responses:
+        '200':
+          description: Same shape as published content, built from draft tables
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicContent'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+  /rest/v1/rpc/draft_status:
+    post:
+      tags: [rpc]
+      summary: Whether unpublished content changes exist, and the scheduled menu (admin only)
+      security:
+        - supabaseKey: []
+          adminJwt: []
+      responses:
+        '200':
+          description: Draft status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DraftStatus'
+  /rest/v1/rpc/publish_content:
+    post:
+      tags: [rpc]
+      summary: Validate drafts and create a new content release (admin only, transactional)
+      security:
+        - supabaseKey: []
+          adminJwt: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                note:
+                  type: string
+                  maxLength: 200
+      responses:
+        '200':
+          description: New release created and made current
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseSummary'
+        '400':
+          description: Validation failed (placeholder settings, plan without price, missing alt text); nothing changed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+  /rest/v1/rpc/rollback_release:
+    post:
+      tags: [rpc]
+      summary: Make an earlier content release current (admin only)
+      security:
+        - supabaseKey: []
+          adminJwt: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                version:
+                  type: integer
+      responses:
+        '200':
+          description: Earlier release is current again
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseSummary'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+  /rest/v1/rpc/release_menu_week:
+    post:
+      tags: [rpc]
+      summary: Publish a menu week now, schedule it, update a scheduled week, or cancel its schedule (admin only)
+      security:
+        - supabaseKey: []
+          adminJwt: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MenuReleaseRequest'
+      responses:
+        '200':
+          description: Menu week with its derived status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuWeekStatus'
+        '400':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+  /rest/v1/rpc/copy_menu_week:
+    post:
+      tags: [rpc]
+      summary: Create a draft week pre-filled from another week (admin only)
+      security:
+        - supabaseKey: []
+          adminJwt: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [source_week_id, week_start]
+              properties:
+                source_week_id:
+                  type: string
+                  format: uuid
+                week_start:
+                  type: string
+                  format: date
+                  description: Monday of the new week
+      responses:
+        '200':
+          description: New draft week
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuWeekStatus'
+  /rest/v1/rpc/create_subscription:
+    post:
+      tags: [rpc]
+      summary: Create a subscription with its first period; also used for Renew (admin only, transactional)
+      security:
+        - supabaseKey: []
+          adminJwt: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionCreate'
+      responses:
+        '200':
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionSummary'
+        '400':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+  /rest/v1/rpc/void_payment:
+    post:
+      tags: [rpc]
+      summary: Void a payment with a reason; the row is kept (admin only)
+      security:
+        - supabaseKey: []
+          adminJwt: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [payment_id, reason]
+              properties:
+                payment_id:
+                  type: string
+                  format: uuid
+                reason:
+                  type: string
+                  maxLength: 300
+      responses:
+        '200':
+          description: Payment voided
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+  /rest/v1/rpc/anonymise_customer:
+    post:
+      tags: [rpc]
+      summary: Irreversibly remove a customer's personal data, keeping payment amounts (admin only; rules pending Q-34)
+      security:
+        - supabaseKey: []
+          adminJwt: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [customer_id]
+              properties:
+                customer_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Customer anonymised
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+components:
+  securitySchemes:
+    revalidateSecret:
+      type: http
+      scheme: bearer
+      description: Shared secret held in the web host's environment and in Supabase Vault. Not a user credential.
+    supabaseKey:
+      type: apiKey
+      in: header
+      name: apikey
+      description: Supabase public (anon/publishable) key. Identifies the project only; grants nothing beyond what RLS gives the public role.
+    adminJwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase Auth access token of a signed-in user who has an active row in admin_users.
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Error:
+      type: object
+      description: Route handlers use this shape. RPC errors arrive in PostgREST's shape (code, message, details, hint) and are mapped to this shape by the server actions. Never contains personal data.
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+    Health:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        version:
+          type: string
+          description: Release tag or commit of the running artifact
+    RevalidateRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          enum: [menu_go_live, smoke_test]
+    RevalidateResult:
+      type: object
+      properties:
+        revalidated:
+          type: boolean
+    PublicContent:
+      type: object
+      description: Versioned document. Money is whole PKR. No personal data.
+      required: [schema_version, release, settings, pricing_rules, plans, dishes, addons, faq]
+      properties:
+        schema_version:
+          type: integer
+        release:
+          type: object
+          properties:
+            version:
+              type: integer
+            published_at:
+              type: string
+              format: date-time
+        settings:
+          $ref: '#/components/schemas/SiteSettings'
+        pricing_rules:
+          $ref: '#/components/schemas/PricingRules'
+        plans:
+          type: array
+          items:
+            $ref: '#/components/schemas/Plan'
+        dishes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Dish'
+        addons:
+          type: array
+          items:
+            $ref: '#/components/schemas/Addon'
+        faq:
+          type: array
+          items:
+            $ref: '#/components/schemas/FaqEntry'
+        page_images:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Image'
+        menu:
+          $ref: '#/components/schemas/LiveMenu'
+    SiteSettings:
+      type: object
+      properties:
+        whatsapp_number:
+          type: string
+          description: Digits only, international format, for wa.me links
+        instagram_handle:
+          type: string
+        order_hours:
+          type: string
+        delivery_area_text:
+          type: string
+        delivery_times:
+          type: object
+          properties:
+            breakfast: { type: string }
+            lunch: { type: string }
+            dinner: { type: string }
+        skip_cutoffs:
+          type: object
+          properties:
+            breakfast: { type: string }
+            lunch: { type: string }
+            dinner: { type: string }
+        skips_per_week:
+          type: integer
+    PricingRules:
+      type: object
+      properties:
+        monthly_saving_percent:
+          type: number
+        breakfast_addon_price:
+          type: integer
+        team_deal_text:
+          type: string
+        team_min_people:
+          type: integer
+    Plan:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        audience: { type: string }
+        meals_included: { type: string }
+        price_unit: { type: string, enum: [per_meal, per_day] }
+        unit_price: { type: integer }
+        weekly_price: { type: integer }
+        monthly_price: { type: integer, nullable: true }
+        is_most_popular: { type: boolean }
+        sort_order: { type: integer }
+    Dish:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        comes_with: { type: string }
+        price: { type: integer }
+        image:
+          $ref: '#/components/schemas/Image'
+    Addon:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        price: { type: integer }
+    FaqEntry:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        question: { type: string }
+        answer: { type: string }
+    Image:
+      type: object
+      properties:
+        path: { type: string, description: Object path in the public media bucket }
+        alt: { type: string }
+        width: { type: integer }
+        height: { type: integer }
+    LiveMenu:
+      type: object
+      nullable: true
+      properties:
+        week_start: { type: string, format: date }
+        went_live_at: { type: string, format: date-time }
+        is_current_week: { type: boolean, description: False when the newest published week is older than this calendar week (FR-06 fallback) }
+        slots:
+          type: array
+          maxItems: 21
+          items:
+            $ref: '#/components/schemas/MenuSlot'
+    MenuSlot:
+      type: object
+      properties:
+        day_of_week: { type: integer, minimum: 1, maximum: 7, description: 1 = Monday }
+        meal: { type: string, enum: [breakfast, lunch, dinner] }
+        dish_text: { type: string }
+        not_served: { type: boolean }
+        image:
+          $ref: '#/components/schemas/Image'
+    DraftStatus:
+      type: object
+      properties:
+        has_unpublished_changes: { type: boolean }
+        current_release_version: { type: integer }
+        scheduled_menu:
+          $ref: '#/components/schemas/MenuWeekStatus'
+    ReleaseSummary:
+      type: object
+      properties:
+        version: { type: integer }
+        published_at: { type: string, format: date-time }
+        checksum: { type: string }
+    MenuReleaseRequest:
+      type: object
+      required: [menu_week_id, mode]
+      properties:
+        menu_week_id: { type: string, format: uuid }
+        mode: { type: string, enum: [publish_now, schedule, cancel_schedule] }
+        go_live_at: { type: string, format: date-time, description: Required for schedule; must be in the future }
+    MenuWeekStatus:
+      type: object
+      nullable: true
+      properties:
+        id: { type: string, format: uuid }
+        week_start: { type: string, format: date }
+        status: { type: string, enum: [draft, scheduled, published, past] }
+        go_live_at: { type: string, format: date-time, nullable: true }
+        differs_from_released: { type: boolean }
+    SubscriptionCreate:
+      type: object
+      required: [customer_id, plan_id, term, start_date, end_date, amount_per_period]
+      properties:
+        customer_id: { type: string, format: uuid }
+        plan_id: { type: string, format: uuid }
+        term: { type: string, enum: [weekly, monthly] }
+        start_date: { type: string, format: date }
+        end_date: { type: string, format: date }
+        breakfast_addon: { type: boolean }
+        amount_per_period: { type: integer, minimum: 0 }
+        amount_note: { type: string }
+        due_date: { type: string, format: date, description: Defaults to the day before start_date }
+        renewed_from_id: { type: string, format: uuid }
+        notes: { type: string }
+    SubscriptionSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string, enum: [active, paused, expired, upcoming] }
+        renewal_due: { type: boolean }
+        payment_status: { type: string, enum: [paid, unpaid, overdue] }
+        balance: { type: integer }
+x-server-actions:
+  description: Not HTTP endpoints. Next.js server actions; each starts with requireAdmin(), validates input with zod, and writes with the admin's own identity so RLS applies. Listed for traceability only.
+  auth: [login, logout, changePassword]
+  content: [saveSettings, savePricingRules, savePlan, reorderPlans, saveDish, deleteDish, reorderDishes, saveAddon, deleteAddon, reorderAddons, saveFaqEntry, deleteFaqEntry, reorderFaq, setPageImage]
+  menu: [saveMenuWeek, copyMenuWeek, releaseMenuWeek]
+  media: [createUploadUrl, finaliseUpload, updateAltText, deleteMedia]
+  publishing: [enablePreview, disablePreview, publishContent, rollbackRelease]
+  customers: [saveCustomer, archiveCustomer, unarchiveCustomer, anonymiseCustomer, searchCustomers]
+  subscriptions: [createSubscription, updateSubscription, setManualState, renewSubscription, savePeriod]
+  payments: [recordPayment, updatePayment, voidPayment]
+  settings: [saveOpsSettings]
