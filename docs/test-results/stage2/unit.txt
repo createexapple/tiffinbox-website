@@ -1,0 +1,15 @@
+$ npm test
+
+> tiffinbox-website@0.1.0 test
+> vitest run
+
+
+ RUN  v5.1.1 /Users/alisabir/CreateexTech/tiffinbox-website
+
+
+ Test Files  6 passed (6)
+      Tests  49 passed (49)
+   Start at  00:19:05
+   Duration  300ms (transform 38%, import 28%, tests 25%, worker 8%, environment 1%)
+
+exit=0

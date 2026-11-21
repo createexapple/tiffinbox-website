@@ -13,3 +13,14 @@ build/
 dist/
 .dart_tool/
 .DS_Store
+
+# Node / Next.js
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+npm-debug.log*
+coverage/
+/playwright-report/
+/test-results/
+/blob-report/
