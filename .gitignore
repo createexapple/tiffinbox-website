@@ -1,5 +1,3 @@
-.env
-.env.*
 !.env.example
 *.keystore
 *.jks
@@ -24,3 +22,4 @@ coverage/
 /playwright-report/
 /test-results/
 /blob-report/
+config.bat

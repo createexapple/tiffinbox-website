@@ -1,5 +1,5 @@
 # Status
-- Current stage: 2 — Frontend (in progress)
+- Current stage: 2 — Frontend (package drafted, awaiting CEO gate)
 - Last approved stage: 1 — milestone PR #8, `verify-approval.sh` PASS (CEO merge on `3bb070d`), `approvals/APPROVALS.md` row 5
 - Updated: 2026-11-22
 
