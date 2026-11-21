@@ -1,5 +1,5 @@
 # Status
-- Current stage: 1 — UI/UX Design (in progress)
+- Current stage: 1 — UI/UX Design (package drafted, awaiting CEO gate)
 - Last approved stage: 0 — milestone PR #6, `verify-approval.sh` PASS (CEO merge on `5f38bf2`), see `approvals/APPROVALS.md` row 3
 - Updated: 2026-11-21
 
@@ -13,7 +13,7 @@
 | D5 States (empty, loading, error, validation) and journey walkthrough J1..J8 | all | `design/screens.md` |
 
 ## Next
-- Orchestrator review of the design against the PRD, then the Stage 1 milestone report and CEO gate.
+- Merge the Stage 1 task PR into `develop`, tag `stage1-v1`, open the milestone PR `develop → main` with `approvals/reports/stage1-v1.md`. STOP until `scripts/verify-approval.sh` returns PASS.
 
 ## Blockers / assumptions carried into design
 - No client answers yet to the blocking-for-design questions (Q-01, Q-02, Q-12, Q-15, Q-18, Q-25, Q-28, Q-29, Q-31). Design proceeds on the PRD assumptions; each is marked in the design as an assumption.
