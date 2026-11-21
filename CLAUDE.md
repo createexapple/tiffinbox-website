@@ -5,7 +5,7 @@ Company rules: `~/.claude/CLAUDE.md` (installed from the Createex agency repo). 
 ## Project facts (keep current)
 - Type: A  (A = new, B = existing takeover)
 - Platforms: Web (public marketing site, mobile-first) + Web admin dashboard
-- Stack: pending docs/architecture.md (Stage 0)
+- Stack (proposed, pending CEO approval of ADR-0001/0002): one Next.js + TypeScript app (public site + /admin), Supabase (Postgres with RLS, Auth, Storage), Azure App Service
 - Current stage: see `docs/status.md`
 - Environments: local / staging / production — see `docs/deployments.md`
 - CEO GitHub handle (approver): @aliSabirDogar

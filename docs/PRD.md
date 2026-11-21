@@ -518,4 +518,39 @@ Tag: **BD** = blocking-for-design (Stage 1), **BL** = blocking-for-launch, **NB*
 | Q-36 | Do you have existing customer or payment records (notebook, spreadsheet, WhatsApp) to import at launch, and how many customers are expected in year one? | Data migration, sizing | NB |
 
 ## 12. Milestones (from architect)
-Pending: to be provided by `software-architect` (architecture, stack, estimate and milestone plan). Not estimated by the PM.
+Provided by `software-architect`, 2026-11-21. Design: `docs/architecture.md` v0.1; decisions: `docs/adr/0001` to `0003` (all Proposed). Task list with dependencies: `docs/architecture.md` section 17. These are estimates made before design, not commitments; nothing has been built or measured.
+
+### 12.1 Effort per lifecycle stage (working days, ranges)
+| Stage | Public site only (FR-01..12) | + CR-001 content admin (FR-13..23) | + CR-002 customers, subscriptions, payments (FR-24..30, NFR-12) | Total if both CRs approved |
+|---|---|---|---|---|
+| 1 UI/UX Design | 4-6 | 3-5 | 2-4 | 9-15 |
+| 2 Frontend | 5-8 | 6-9 | 5-8 | 16-25 |
+| 3 Backend & Integration | 1-2 | 8-12 | 6-10 | 15-24 |
+| 4 QA, Security & Release Candidate | 3-4 | 3-5 | 3-5 | 9-14 |
+| 5 Deployment | 2-3 | 2-3 | 1-2 | 5-8 |
+| 6 Store Publishing | N/A (web only) | N/A | N/A | N/A |
+| **Total** | **15-23** | **22-34** | **17-29** | **54-86** |
+
+### 12.2 Milestones
+| Milestone | Gate tag | Contains | Main dependencies |
+|---|---|---|---|
+| M1 Design | `stage1-v<n>` | Design system with contrast-checked tokens; S-01..S-07; A-01..A-17 for the approved CRs; all states; prototype | CEO decision on CR-001/CR-002 (Q-01); Q-02, Q-12, Q-15, Q-18, Q-25, Q-28, Q-29, Q-31 (blocking-for-design) |
+| M2 Frontend | `stage2-v<n>` | Hosting spike (page caching, fallback, speed from Lahore); CI and staging; all approved screens with labelled mocks; frontend tests | M1 approved; hosting decision (ADR-0001); browser-floor decision (NFR-10) |
+| M3 Backend & Integration | `stage3-v<n>` | Database, RLS, auth, publish/preview/rollback, menu scheduling, media, customers/subscriptions/payments with computed statuses, audit; mocks removed | M2 approved; payment rules confirmed (Q-10, Q-32, Q-35) |
+| M4 QA, Security, RC | `stage4-rc<n>` | E2E for J1..J8, performance and accessibility results, real-device notes, security review of personal data, fixes retested, release candidate | M3 approved; real logo/photos for a meaningful performance test (Q-12, Q-13) |
+| M5 Deployment | `release-v1.0.0` | Production environment definition, backup and restore rehearsal, monitoring, runbook details; production deploy executed by the CEO | M4 approved; production accounts and budget (Q-03); domain (Q-05); WhatsApp number, hours, final prices (Q-04, Q-06, Q-07, Q-08) |
+
+### 12.3 Assumptions behind the figures
+- A working day = one full day of the Engineering Lead running the specialist agents, including review, tests and rework of agent output. Calendar time will be longer: CEO gate reviews, client answers and asset delivery are not included.
+- Stage 0 (this stage) is not included. Change requests raised after Stage 0, and the "not in v1" items (Q-28 to Q-31, admin roles, refunds, data import Q-36), are not included.
+- The architecture in `docs/architecture.md` is approved as proposed (one Next.js app + Supabase, no separate API server). A separate API server would add about 8-12 days.
+- The CR-002 column assumes CR-001 is also approved. CR-002 without CR-001 is not offered as a figure because it would still need the login, admin shell, database, audit and backups counted under CR-001 (about 12-18 of CR-001's days).
+- "Public site only" assumes content kept in the code with no database or admin; every menu or price change would then be a developer change and a CEO deployment.
+- The client supplies logo, photos, copy, prices and contact details on time; placeholders are used until then and do not count as rework.
+- One round of CEO change requests per stage is absorbed in the upper end of each range; more rounds add time.
+- The low end assumes the open questions are answered as the PRD already assumes (A-01..A-26); the high end covers one changed answer per area without new features.
+- Stage 2 includes a hosting spike of about 1 day (task T2.1). If it fails and the host changes, add 1-2 days.
+- Stage 4 includes time for human real-device testing notes but not the testers' own time.
+
+### 12.4 Running cost
+About USD 39 to 40 a month for production as recommended (Supabase Pro + Azure App Service B1 + domain); variants and what is verified are in `docs/architecture.md` section 12. Owner and budget: Q-03.
