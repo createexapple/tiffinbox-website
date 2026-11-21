@@ -8,8 +8,8 @@
 |---|---|---|---|
 | T2.3a App scaffold (Next.js, TypeScript strict, tokens, lint, typecheck, test setup) | NFR-01..05 | web-frontend-developer | implemented; lint, typecheck, build pass |
 | T2.3b Public pages with labelled mock content, SEO, accessibility | FR-01..12, S-01..S-07 | web-frontend-developer | implemented; 49 unit + 72 e2e tests pass (Chromium only); not human-verified |
-| T2.4 Admin shell and content screens with mocks | FR-13..23, A-01..A-11 | web-frontend-developer | in progress |
-| T2.5 Operations screens with mocks | FR-24..30, A-12..A-17 | web-frontend-developer | pending |
+| T2.4 Admin shell and content screens with mocks | FR-13..23, A-01..A-11 | web-frontend-developer | implemented on mock data; tests pass (Chromium only); not human-verified |
+| T2.5 Operations screens with mocks | FR-24..30, A-12..A-17 | web-frontend-developer | implemented on mock data; tests pass (Chromium only); not human-verified |
 | T2.6 Frontend tests, screenshots, design-vs-build comparison | all | qa-engineer | pending |
 
 ## Blockers

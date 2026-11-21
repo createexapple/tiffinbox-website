@@ -1,27 +1,49 @@
 $ npm run build
 
+
 > tiffinbox-website@0.1.0 build
 > next build
 
 ▲ Next.js 16.4.6 (Turbopack)
-✓ Running next.config.ts took 41ms
+✓ Running next.config.ts took 44ms
 
   Creating an optimized production build ...
-✓ Compiled successfully in 399ms
+✓ Compiled successfully in 327ms
   Running TypeScript ...
-  Finished TypeScript in 3.0s ...
+  Finished TypeScript in 2.4s ...
   Collecting page data using 11 workers ...
-  Generating static pages using 11 workers (0/10) ...
-  Generating static pages using 11 workers (2/10) 
-  Generating static pages using 11 workers (4/10) 
-  Generating static pages using 11 workers (7/10) 
-✓ Generating static pages using 11 workers (10/10) in 799ms
+  Generating static pages using 11 workers (0/25) ...
+  Generating static pages using 11 workers (6/25) 
+  Generating static pages using 11 workers (12/25) 
+  Generating static pages using 11 workers (18/25) 
+✓ Generating static pages using 11 workers (25/25) in 785ms
   Finalizing page optimization ...
 
 Route (app)
 ┌ ○ /
 ├ ○ /_not-found
 ├ ○ /about
+├ ○ /admin
+├ ○ /admin/addons
+├ ƒ /admin/customers
+├ ƒ /admin/customers/[id]
+├ ƒ /admin/customers/[id]/edit
+├ ƒ /admin/customers/[id]/subscriptions/new
+├ ○ /admin/customers/new
+├ ○ /admin/dishes
+├ ○ /admin/faq
+├ ○ /admin/history
+├ ƒ /admin/login
+├ ○ /admin/media
+├ ○ /admin/menu
+├ ƒ /admin/payments
+├ ƒ /admin/payments/[id]
+├ ƒ /admin/payments/new
+├ ○ /admin/plans
+├ ○ /admin/publish
+├ ○ /admin/settings
+├ ƒ /admin/subscriptions/[id]/edit
+├ ƒ /admin/subscriptions/[id]/renew
 ├ ○ /customize
 ├ ○ /how-it-works
 ├ ○ /menu
@@ -30,6 +52,8 @@ Route (app)
 └ ○ /sitemap.xml
 
 
-○  (Static)  prerendered as static content
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
 
 exit=0
