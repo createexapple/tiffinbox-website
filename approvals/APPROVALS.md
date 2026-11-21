@@ -10,3 +10,4 @@ A row counts only if `scripts/verify-approval.sh <repo> <pr> <sha>` returns PASS
 | 4 | 2026-11-21 | 1 | stage1-v1 | PR head at review | milestone PR develop → main (opened after the Stage 1 task PR merges) | — | PENDING (not yet reviewed) | Claude |
 | 5 | 2026-11-22 | 1 | stage1-v1 | 3bb070d | https://github.com/createexapple/tiffinbox-website/pull/8 | none (CEO merge, no review) | PASS #8: MERGED by aliSabirDogar on 3bb070dd6ceb at 2026-11-21T19:03:54Z (CEO merge, no review) | Claude |
 | 6 | 2026-11-22 | 2 | stage2-v1 | PR head at review | milestone PR develop → main (opened after the Stage 2 task PR merges) | — | PENDING (not yet reviewed) | Claude |
+| 7 | 2026-11-22 | 2 | stage2-v1 | 325ab63 | https://github.com/createexapple/tiffinbox-website/pull/10 | none (CEO merge, no review) | PASS #10: MERGED by aliSabirDogar on 325ab63612c0 at 2026-11-21T21:12:33Z (CEO merge, no review) | Claude |

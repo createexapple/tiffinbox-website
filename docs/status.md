@@ -1,17 +1,19 @@
 # Status
-- Current stage: 2 — Frontend (package drafted, awaiting CEO gate)
-- Last approved stage: 1 — milestone PR #8, `verify-approval.sh` PASS (CEO merge on `3bb070d`), `approvals/APPROVALS.md` row 5
+- Current stage: 3 — Backend & Integration (in progress)
+- Last approved stage: 2 — milestone PR #10, `verify-approval.sh` PASS (CEO merge on `325ab63`), `approvals/APPROVALS.md` row 7
 - Updated: 2026-11-22
 
-## In progress (branch `stage2/frontend`, one writer at a time)
-| Task | FRs / screens | Owner | State |
+## In progress (branch `stage3/backend`, one writer at a time)
+| Task | FRs | Owner | State |
 |---|---|---|---|
-| T2.3a App scaffold (Next.js, TypeScript strict, tokens, lint, typecheck, test setup) | NFR-01..05 | web-frontend-developer | implemented; lint, typecheck, build pass |
-| T2.3b Public pages with labelled mock content, SEO, accessibility | FR-01..12, S-01..S-07 | web-frontend-developer | implemented; 49 unit + 72 e2e tests pass (Chromium only); not human-verified |
-| T2.4 Admin shell and content screens with mocks | FR-13..23, A-01..A-11 | web-frontend-developer | implemented on mock data; tests pass (Chromium only); not human-verified |
-| T2.5 Operations screens with mocks | FR-24..30, A-12..A-17 | web-frontend-developer | implemented on mock data; tests pass (Chromium only); not human-verified |
-| T2.6 Frontend tests, screenshots, design-vs-build comparison | all | qa-engineer | pending |
+| T3.1 Schema migrations, RLS, audit triggers, seeds, database tests (content + access) | FR-13..23, NFR-07, 12 | database-engineer | in progress |
+| T3.4 Operations schema: customers, subscriptions, periods, payments, status views, tests | FR-24..30 | database-engineer | in progress |
+| T3.2 Auth, guard, content server actions, media pipeline | FR-13..21 | backend-developer | pending (needs T3.1 + a database) |
+| T3.3 Publish, preview, rollback, menu scheduling, public read path on real data | FR-06, 14, 15, 22 | backend-developer | pending |
+| T3.5 Operations server actions and screens on real data; overview | FR-24..30 | backend-developer | pending |
+| T3.6 RLS and auth review | NFR-07, 12 | security-engineer | pending |
 
 ## Blockers
-- T2.1 hosting spike and T2.2 staging deploy pipeline cannot run: no staging Azure or Supabase access has been provided (Q-03). Stage 2 proceeds locally; the preview is a local build until staging exists.
-- Client inputs still missing: logo, photos, WhatsApp number, order hours, domain (placeholders in the build).
+- No database to run against: Docker is not installed on this machine (so no local Supabase stack) and no staging Supabase project has been provided (Q-03). SQL can be written but not executed or tested until one exists.
+- GitHub Actions has never run on this repo (empty run list); cause not investigated.
+- T2.1 hosting spike still not done (no staging host).
