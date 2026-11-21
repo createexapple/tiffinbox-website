@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --check .",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "db:test": "bash supabase/tests/run.sh"
   },
   "dependencies": {
     "next": "16.4.6",

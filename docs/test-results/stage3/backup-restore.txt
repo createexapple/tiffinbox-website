@@ -1,0 +1,24 @@
+Sun Nov 22 02:38:25 PKT 2026
+command: bash supabase/tests/backup_restore_test.sh
+postgres: 16.14 (Homebrew)
+
+== backup: pg_dump --data-only (custom format) of the public schema + auth.users from tiffinbox_stage3_restore_src
+pg_dump: warning: there are circular foreign-key constraints on this table:
+pg_dump: detail: subscriptions
+pg_dump: hint: You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.
+pg_dump: hint: Consider using a full dump instead of a --data-only dump to avoid this problem.
+dump size: 17731 bytes  tbx_restore.XXXXXX.Fzus0cWSND
+dump size: 1208 bytes  tbx_restore.XXXXXX.Fzus0cWSND.auth
+== restore: new empty database tiffinbox_stage3_restore_dst gets the SCHEMA FROM THE MIGRATIONS (tables, RLS, policies, grants), then the DATA from the dump
+source counts : admin_users=1,audit=59,auth_users=1,customers=8,dishes=6,faq=7,menu_slots=42,payments=4,periods=8,plans=4,releases=1,subscriptions=8
+restored counts: admin_users=1,audit=59,auth_users=1,customers=8,dishes=6,faq=7,menu_slots=42,payments=4,periods=8,plans=4,releases=1,subscriptions=8
+source checksum  : 1998a3af0291f915cd4f11ba49e973fb
+restored checksum: 1998a3af0291f915cd4f11ba49e973fb
+PASS: row counts identical after restore
+PASS: content checksum identical after restore (payments, customers, subscriptions, releases, audit, site_state, settings)
+PASS: no audit rows duplicated by triggers during restore
+PASS: RLS is enabled on all 19 tables in the restored database
+PASS: anon is still denied on the restored database
+PASS: column-level grants intact (payments.voided_at not updatable)
+PASS: get_public_content works for anon on the restored database (release 1)
+PASS: triggers are live again after restore (a new change is audited; audit ids continue from the restored sequence)

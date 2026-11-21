@@ -1,0 +1,105 @@
+ customers 
+-----------
+      5000
+(1 row)
+ payments 
+----------
+    15000
+(1 row)
+=== Q1 duplicate-phone warning (FR-24): BEFORE (index customers_phone_idx dropped)
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
+ Seq Scan on customers (actual time=0.707..0.795 rows=1 loops=1)
+   Filter: ((phone_e164 = '+923000004321'::text) AND (id <> gen_random_uuid()))
+   Rows Removed by Filter: 4999
+ Planning Time: 0.143 ms
+ Execution Time: 0.804 ms
+(5 rows)
+=== Q1 AFTER (index present, as shipped)
+                                         QUERY PLAN                                          
+---------------------------------------------------------------------------------------------
+ Index Scan using customers_phone_idx on customers (actual time=0.036..0.037 rows=1 loops=1)
+   Index Cond: (phone_e164 = '+923000004321'::text)
+   Filter: (id <> gen_random_uuid())
+ Planning Time: 0.149 ms
+ Execution Time: 0.053 ms
+(5 rows)
+=== Q2 duplicate payment reference warning (FR-28): BEFORE (index payments_reference_idx dropped)
+                                                QUERY PLAN                                                 
+-----------------------------------------------------------------------------------------------------------
+ Seq Scan on payments (actual time=4.532..4.532 rows=0 loops=1)
+   Filter: ((voided_at IS NULL) AND (method = 'jazzcash'::text) AND (lower(reference) = 'ref-7777'::text))
+   Rows Removed by Filter: 15000
+ Planning Time: 0.176 ms
+ Execution Time: 4.544 ms
+(5 rows)
+=== Q2 AFTER (index present, as shipped)
+                                          QUERY PLAN                                           
+-----------------------------------------------------------------------------------------------
+ Index Scan using payments_reference_idx on payments (actual time=0.019..0.019 rows=0 loops=1)
+   Index Cond: ((method = 'jazzcash'::text) AND (lower(reference) = 'ref-7777'::text))
+ Planning Time: 0.198 ms
+ Execution Time: 0.028 ms
+(4 rows)
+=== Q3 customer detail: payments of one customer, newest first: BEFORE (index payments_customer_idx dropped)
+                                             QUERY PLAN                                              
+-----------------------------------------------------------------------------------------------------
+ Sort (actual time=1.905..1.906 rows=3 loops=1)
+   Sort Key: payments.paid_on DESC
+   Sort Method: quicksort  Memory: 25kB
+   InitPlan 1 (returns $0)
+     ->  Index Scan using customers_phone_idx on customers (actual time=0.028..0.029 rows=1 loops=1)
+           Index Cond: (phone_e164 = '+923000001234'::text)
+   ->  Seq Scan on payments (actual time=0.633..1.888 rows=3 loops=1)
+         Filter: (customer_id = $0)
+         Rows Removed by Filter: 14997
+ Planning Time: 0.193 ms
+ Execution Time: 1.926 ms
+(11 rows)
+=== Q3 AFTER (index present, as shipped)
+                                             QUERY PLAN                                              
+-----------------------------------------------------------------------------------------------------
+ Sort (actual time=0.046..0.047 rows=3 loops=1)
+   Sort Key: payments.paid_on DESC
+   Sort Method: quicksort  Memory: 25kB
+   InitPlan 1 (returns $0)
+     ->  Index Scan using customers_phone_idx on customers (actual time=0.026..0.026 rows=1 loops=1)
+           Index Cond: (phone_e164 = '+923000001234'::text)
+   ->  Bitmap Heap Scan on payments (actual time=0.041..0.043 rows=3 loops=1)
+         Recheck Cond: (customer_id = $0)
+         Heap Blocks: exact=3
+         ->  Bitmap Index Scan on payments_customer_idx (actual time=0.039..0.039 rows=3 loops=1)
+               Index Cond: (customer_id = $0)
+ Planning Time: 0.184 ms
+ Execution Time: 0.069 ms
+(13 rows)
+=== Q4 dues list (A-16): all unpaid + overdue periods through the computed-status function (no index change; timing only)
+                                        QUERY PLAN                                        
+------------------------------------------------------------------------------------------
+ Function Scan on period_payment_status_at (actual time=28.079..29.511 rows=5000 loops=1)
+   Filter: (status = ANY ('{unpaid,overdue}'::text[]))
+ Planning Time: 0.036 ms
+ Execution Time: 29.950 ms
+(4 rows)
+=== Q5 customer list status filters (FR-25): customer_summary at 5,000 customers (timing only)
+                                        QUERY PLAN                                         
+-------------------------------------------------------------------------------------------
+ Aggregate (actual time=74.586..74.587 rows=1 loops=1)
+   ->  Function Scan on customer_summary_at (actual time=73.276..74.226 rows=5000 loops=1)
+         Filter: (payment_status = 'overdue'::text)
+ Planning Time: 0.035 ms
+ Execution Time: 74.846 ms
+(5 rows)
+=== Q5b same query through the shipped design, recorded BEFORE the rewrite: 13195 ms (correlated per-customer subqueries); AFTER: see above
+
+--- Recorded from the FIRST run, before customer_summary_at was rewritten (same 5,000 customers / 15,000 payments) ---
+=== Q5 customer list status filters (FR-25): customer_summary at 5,000 customers (BEFORE the rewrite)
+ Aggregate (actual time=13195.001..13195.002 rows=1 loops=1)
+   ->  Function Scan on customer_summary_at (actual time=13194.999..13194.999 rows=0 loops=1)
+         Filter: (payment_status = 'overdue'::text)
+ Execution Time: 13195.219 ms
+Cause: per-customer correlated subqueries over a materialised CTE (O(n^2)). Fix: aggregate once per customer
+(migration 20261122000006). AFTER: 74.8 ms (above).
+--- Also from the first run: Q2 used a Seq Scan even WITH the index because the partial-index predicate
+(voided_at IS NULL AND reference <> '') was not implied by the query. Fix: predicate is now voided_at IS NULL
+(migration 20261122000003). AFTER: Bitmap Index Scan, 0.041 ms (above), BEFORE (no index): Seq Scan 3.7 ms.

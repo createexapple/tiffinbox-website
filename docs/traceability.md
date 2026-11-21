@@ -35,3 +35,21 @@ Stage 0 state (2026-11-21): requirements only. Nothing is designed, built or tes
 | FR-30 Dashboard overview | A-02 | | e2e `admin.spec.ts`/`admin-states.spec.ts`: cards open filtered lists with matching counts; zero state; unit `admin-mock-repository.test.ts` | Yes, uncommitted on `stage2/frontend` (mock data, nothing saved) | e2e + unit (docs/test-results/stage2/e2e.txt, unit.txt) | |
 
 Open dependencies that may change rows: Q-01 (confirm v1 admin scope), Q-15 (editable static copy), Q-25 (menu per plan), Q-28 to Q-31 (skip/pause tracking, office invoices, receipts, delivery lists: not FRs; would add FRs via change request), Q-02 (admin roles).
+
+## Stage 3 database (T3.1, T3.4) - written 2026-11-22 on `stage3/backend`, uncommitted
+Implemented in SQL and tested against a throwaway local PostgreSQL 16 with a local Supabase emulation (`docs/test-results/stage3/db-tests.txt`: 606 assertions passed, 0 failed; `backup-restore.txt`: 8 passed; `perf-explain.txt`). **Never run on Supabase.** Not verified by a human, not security-reviewed (T3.6), not connected to the app (T3.2/T3.3/T3.5 pending). CEO accepted column untouched. Details: `docs/database.md`.
+
+| FR / NFR | Database objects | Tests |
+|---|---|---|
+| FR-13 (server-side authorisation) | `admin_users`, `app.is_admin()`, RLS on all 19 tables, function privileges | `01_rls.sql` (anon / non-admin / inactive admin / admins) |
+| FR-14, FR-15, FR-06 | `menu_weeks`, `menu_slots`, `save_menu_week`, `copy_menu_week`, `release_menu_week`, `menu_week_status`, live-menu rule in `get_public_content` | `05_menu_golive.sql` |
+| FR-16..FR-20 | `plans`, `pricing_rules`, `dishes`, `addons`, `faq_entries`, `site_settings` (+ constraints) | `01_rls.sql`, `04_publish_rollback.sql`, `03_payments.sql` (plan snapshot, most popular) |
+| FR-21 | `media`, `page_images`, storage buckets and policies (storage only emulated) | `01_rls.sql`, `04_publish_rollback.sql` (alt text, in-use guard) |
+| FR-22, NFR-08 (rollback) | `content_releases`, `site_state`, `publish_content`, `rollback_release`, `draft_status`, `get_draft_content` | `04_publish_rollback.sql` (validation, atomicity, rollback, preview) |
+| FR-23 | `audit_log`, row triggers, `change_history` | `06_audit.sql` |
+| FR-24, FR-26, FR-28 | `customers`, `subscriptions`, `subscription_periods`, `payments`, `create_subscription`, `void_payment` | `03_payments.sql` |
+| FR-27, FR-29, FR-30 | `subscription_status`, `period_payment_status`, `subscription_balance`, `customer_summary`, `dashboard_overview` | `02_status_views.sql`, `07_seeds.sql` (Stage 2 sample parity) |
+| FR-25 | `customer_summary` (filters), indexes | `02_status_views.sql`; `perf-explain.txt` |
+| NFR-07, NFR-12 | RLS, no anon grants, column grants, append-only audit, `anonymise_customer` | `01_rls.sql`, `06_audit.sql` |
+| NFR-08, NFR-12 (backup, restore) | procedure in `docs/database.md` section 9 | `backup_restore_test.sh` (local only) |
+
