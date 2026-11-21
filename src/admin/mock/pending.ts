@@ -5,7 +5,7 @@
  */
 import { formatRs } from '@/lib/format';
 import { weekLabel, MEAL_LABEL } from '../format';
-import { slotsEqual } from '../status';
+import { slotsEqual } from './status-rules';
 import type {
   ContentArea,
   ContentSnapshot,
@@ -159,6 +159,12 @@ export function describePendingChanges(
   );
 
   const settingFields: [string, (s: ContentSnapshot['settings']) => string][] = [
+    ['Business name', (s) => s.businessName],
+    ['Tagline', (s) => s.tagline],
+    ['Area served', (s) => s.areaServed],
+    ['Delivery boundary text', (s) => s.deliveryBoundaryText],
+    ['Legal name and address', (s) => s.legalNameAndAddress],
+    ['Payment methods', (s) => s.paymentMethods.join(', ')],
     ['WhatsApp number', (s) => s.whatsappNumber],
     ['Instagram handle', (s) => s.instagramHandle],
     ['Order hours', (s) => s.orderHours],

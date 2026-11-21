@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
-import { useQuery } from './AdminProvider';
+import { useAdmin, useQuery } from './AdminProvider';
 
 const NAV: { heading: string; items: { href: string; label: string }[] }[] = [
   { heading: 'Overview', items: [{ href: '/admin', label: 'Dashboard' }] },
@@ -38,8 +38,10 @@ function isCurrent(pathname: string, href: string): boolean {
 /** Shared admin shell for A-02..A-17: top bar with unpublished-changes pill, sidebar (drawer on phones). */
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { repo } = useAdmin();
   const [open, setOpen] = useState(false);
-  const { state } = useQuery((repo) => repo.getOverview());
+  const { state } = useQuery((r) => r.getOverview());
   const pending = state.status === 'ready' ? state.data.pendingChanges : null;
 
   return (
@@ -75,9 +77,18 @@ export function AdminShell({ children }: { children: ReactNode }) {
             Live site up to date
           </Link>
         )}
-        <Link className="btn btn-secondary btn-sm" href="/admin/login">
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          onClick={async () => {
+            // Revokes the session on the server (FR-13), then leaves the dashboard.
+            await repo.signOut().catch(() => undefined);
+            router.push('/admin/login');
+            router.refresh();
+          }}
+        >
           Log out
-        </Link>
+        </button>
       </header>
       <div className="adm-layout">
         <nav id="adm-nav" className={`adm-nav${open ? ' open' : ''}`} aria-label="Admin">

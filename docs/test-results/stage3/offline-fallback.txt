@@ -1,0 +1,25 @@
+
+> tiffinbox-website@0.1.0 test:fallback
+> node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/verify-offline-fallback.mjs
+
+== A. backend unreachable, last-good file present
+PASS: GET /plans answers 200
+PASS: it shows the saved plan names and prices
+PASS: there is no sample-content banner and no error state
+PASS: GET /menu shows the saved weekly menu
+PASS: the failure was logged as structured JSON without secrets
+
+== B. backend unreachable, no last-good file
+PASS: GET /menu does not crash (no 5xx page)
+PASS: it shows the designed error state, in the normal page chrome
+PASS: GET / also stays up
+
+== C. no Supabase configuration
+PASS: GET /admin redirects to the login page
+PASS: the login page itself renders
+PASS: /api/health is ok and exposes no configuration
+PASS: /api/revalidate answers 503 (not configured), never open
+
+assertions passed: 12
+assertions failed: 0
+RESULT: OK

@@ -1,13 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  activePayments,
-  allocatePayments,
-  balanceOf,
-  defaultAmount,
-  monthlyPriceCheck,
-  proposeEndDate,
-  sumAmounts,
-} from '@/admin/ledger';
+import { activePayments, defaultAmount, proposeEndDate, sumAmounts } from '@/admin/ledger';
+import { allocatePayments, balanceOf, monthlyPriceCheck } from '@/admin/mock/ledger';
 
 describe('allocatePayments (oldest period first, architecture sec. 9.2)', () => {
   const periods = [

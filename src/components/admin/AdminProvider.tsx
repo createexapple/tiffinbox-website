@@ -10,27 +10,49 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from 'react';
+import { ActionsAdminRepository } from '@/admin/actions-repository';
 import type { AdminRepository } from '@/admin/repository';
 import { MockAdminStore, type MockControls } from '@/admin/mock/store';
 import { ToastProvider } from './Toast';
 
 /**
- * Wires the screens to a repository. STAGE 2: the in-memory mock (nothing is saved, state lives while the
- * admin tab stays open). STAGE 3: construct the Supabase-backed repository here instead; no screen changes.
+ * Wires the screens to a repository. Normally the Supabase-backed one (server actions). `mode="mock"` is chosen on
+ * the server only under the explicit test flag (src/lib/env.ts `isMockBackend`) and gives the in-memory mock for
+ * network-free unit and e2e tests. Screens never know which one they have.
  */
+export type AdminMode = 'live' | 'mock';
+
 interface AdminContextValue {
   repo: AdminRepository;
-  /** Mock-only controls; null once a real repository is wired in. */
+  /** Mock-only controls; null with the real repository. */
   controls: MockControls | null;
   /** Increments after every write, so views re-read. */
   version: number;
-  /** Increments when the mock data set is replaced, so forms drop their local state. */
+  /** Increments when the mock data set is replaced (always 0 for the real repository), so forms drop local state. */
   epoch: number;
 }
 
 const AdminContext = createContext<AdminContextValue | null>(null);
 
-export function AdminProvider({ children }: { children: ReactNode }) {
+export function AdminProvider({ mode, children }: { mode: AdminMode; children: ReactNode }) {
+  return mode === 'mock' ? (
+    <MockProvider>{children}</MockProvider>
+  ) : (
+    <LiveProvider>{children}</LiveProvider>
+  );
+}
+
+function LiveProvider({ children }: { children: ReactNode }) {
+  const [repo] = useState(() => new ActionsAdminRepository());
+  const version = useSyncExternalStore(repo.subscribe, repo.getVersion, () => 0);
+  return (
+    <AdminContext.Provider value={{ repo, controls: null, version, epoch: 0 }}>
+      <ToastProvider>{children}</ToastProvider>
+    </AdminContext.Provider>
+  );
+}
+
+function MockProvider({ children }: { children: ReactNode }) {
   const [store] = useState(() => new MockAdminStore());
   const version = useSyncExternalStore(store.subscribe, store.getVersion, () => 0);
   const epoch = useSyncExternalStore(store.subscribe, store.getEpoch, () => 0);
@@ -39,6 +61,12 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       <ToastProvider>{children}</ToastProvider>
     </AdminContext.Provider>
   );
+}
+
+/** Admin shell chrome that only exists in test mode (the banner and its controls). */
+export function MockOnly({ children }: { children: ReactNode }) {
+  const { controls } = useAdmin();
+  return controls ? <>{children}</> : null;
 }
 
 export function useAdmin(): AdminContextValue {

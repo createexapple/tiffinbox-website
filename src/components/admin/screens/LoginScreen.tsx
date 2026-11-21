@@ -2,36 +2,53 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
+import { RepoError } from '@/admin/repository';
 import { validateLogin, type LoginField } from '@/admin/validation/auth';
+import { useAdmin } from '../AdminProvider';
 import { ErrorSummary, TextField } from '../fields';
 import { Alert } from '../ui';
 
-type Banner = 'none' | 'wrong' | 'throttled' | 'expired';
+type Banner = 'none' | 'wrong' | 'throttled' | 'expired' | 'unavailable';
 
 /**
- * A-01. MOCK AUTH (Stage 2): the form checks the input and goes to the dashboard. There is no real
- * authentication: the password is never stored, compared, sent anywhere or logged, and it is cleared after
- * submit. Stage 3 replaces `onSubmit` with the Supabase sign-in server action; generic error, throttling
- * and session-expiry messages already match the PRD (FR-13, NFR-07).
+ * A-01 (FR-13, NFR-07). The form is checked in the browser for instant messages, then sent to the sign-in server
+ * action, which checks it again and asks Supabase Auth. Whatever is wrong (unknown email, wrong password, an
+ * account that is not an admin) the message is the same, so nobody can guess accounts. After too many failures
+ * the throttling message is shown. The password is cleared after every submit and never stored or logged.
  */
 export function LoginScreen({ expired = false }: { expired?: boolean }) {
   const router = useRouter();
+  const { repo, controls } = useAdmin();
+  const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<Partial<Record<LoginField, string>>>({});
   const [banner, setBanner] = useState<Banner>(expired ? 'expired' : 'none');
 
-  function onSubmit(event: FormEvent) {
+  async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    if (banner === 'throttled') return;
+    if (banner === 'throttled' || busy) return;
     const result = validateLogin({ email, password });
     if (!result.ok) {
       setErrors(result.errors);
       return;
     }
     setErrors({});
-    setPassword('');
-    router.push('/admin');
+    setBusy(true);
+    try {
+      await repo.signIn(result.value.email, password);
+      setPassword('');
+      router.push('/admin');
+      router.refresh();
+    } catch (e) {
+      setPassword('');
+      const code = e instanceof RepoError ? e.code : 'invalid';
+      setBanner(
+        code === 'throttled' ? 'throttled' : code === 'load_failed' ? 'unavailable' : 'wrong',
+      );
+    } finally {
+      setBusy(false);
+    }
   }
 
   const throttled = banner === 'throttled';
@@ -55,6 +72,11 @@ export function LoginScreen({ expired = false }: { expired?: boolean }) {
           {banner === 'wrong' ? (
             <Alert tone="err" title="Email or password is not correct.">
               Please check and try again.
+            </Alert>
+          ) : null}
+          {banner === 'unavailable' ? (
+            <Alert tone="err" title="Sign-in is not available right now.">
+              Please try again in a minute. If it keeps happening, tell the Createex team.
             </Alert>
           ) : null}
           {throttled ? (
@@ -99,8 +121,8 @@ export function LoginScreen({ expired = false }: { expired?: boolean }) {
             <button
               type="submit"
               className="btn btn-primary btn-block btn-lg"
-              disabled={throttled}
-              aria-disabled={throttled}
+              disabled={throttled || busy}
+              aria-disabled={throttled || busy}
             >
               Log in
             </button>
@@ -111,43 +133,45 @@ export function LoginScreen({ expired = false }: { expired?: boolean }) {
           </p>
         </div>
 
-        <details className="card" style={{ maxWidth: '26rem', width: '100%' }}>
-          <summary>Mock only: preview other login states</summary>
-          <p className="small muted">
-            Real sign-in does not exist in Stage 2, so these buttons show the messages Stage 3 will
-            show.
-          </p>
-          <div className="cta-row">
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => setBanner('wrong')}
-            >
-              Wrong credentials
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => setBanner('throttled')}
-            >
-              Throttled
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => setBanner('expired')}
-            >
-              Session expired
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => setBanner('none')}
-            >
-              Clear
-            </button>
-          </div>
-        </details>
+        {controls === null ? null : (
+          <details className="card" style={{ maxWidth: '26rem', width: '100%' }}>
+            <summary>Mock only: preview other login states</summary>
+            <p className="small muted">
+              Test mode has no real sign-in, so these buttons show the messages the real login
+              shows.
+            </p>
+            <div className="cta-row">
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setBanner('wrong')}
+              >
+                Wrong credentials
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setBanner('throttled')}
+              >
+                Throttled
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setBanner('expired')}
+              >
+                Session expired
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setBanner('none')}
+              >
+                Clear
+              </button>
+            </div>
+          </details>
+        )}
       </div>
     </main>
   );

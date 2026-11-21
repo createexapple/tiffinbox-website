@@ -106,12 +106,12 @@ for (const viewport of VIEWPORTS) {
   });
 }
 
-test.describe('mock login (FR-13, Stage 2)', () => {
-  test('valid-looking input goes to the dashboard; the banner says sign-in is a mock', async ({
+test.describe('login form in test mode (FR-13; real sign-in is covered by tests/staging)', () => {
+  test('valid-looking input goes to the dashboard; the test-mode banner says no login is checked', async ({
     page,
   }) => {
     await page.goto('/admin/login');
-    await expect(page.getByTestId('mock-banner')).toContainText('Sign-in is a mock');
+    await expect(page.getByTestId('mock-banner')).toContainText('no login is checked');
     await mockLogin(page);
     await expect(page).toHaveURL(/\/admin$/);
     // The password never appears in the address bar.

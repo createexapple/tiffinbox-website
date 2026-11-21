@@ -20,7 +20,8 @@ export const metadata: Metadata = pageMetadata({
 export default async function MenuPage() {
   const [week, settings, copy] = await Promise.all([getMenu(), getSiteSettings(), getPageCopy()]);
   const link = buildWhatsAppLink(settings.whatsappNumber);
-  const current = week ? isMenuCurrent(week, karachiDateKey()) : false;
+  // The database says whether the released week covers the current calendar week; mock content derives it.
+  const current = week ? (week.isCurrent ?? isMenuCurrent(week, karachiDateKey())) : false;
 
   return (
     <section className="section">

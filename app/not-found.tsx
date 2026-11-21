@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 /** S-07 (FR-12): branded 404, served with HTTP 404, inside the full public chrome so the visitor is never stranded. */
 export default function NotFound() {
   return (
-    <PublicShell>
+    <PublicShell keepChildrenWhenUnavailable>
       <section className="section notfound">
         <div className="wrap narrow centered">
           <p className="big" aria-hidden="true">

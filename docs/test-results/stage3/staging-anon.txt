@@ -1,0 +1,8 @@
+
+> tiffinbox-website@0.1.0 test:staging
+> node --env-file-if-exists=.env.local scripts/staging-integration.mjs
+
+.env.local not found. Continuing without it.
+SUPABASE_URL: missing
+SUPABASE_PUBLISHABLE_KEY: missing
+RESULT: NOT RUN (environment variables missing; create .env.local, see docs/backend.md)

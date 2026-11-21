@@ -17,6 +17,12 @@ export interface PlanDraft {
   priceUnit: PriceUnit;
   unitPrice: number | null;
   weeklyPrice: number | null;
+  /**
+   * Monthly price as the database computes it (stored override, else weekly price x 4 less the saving %, or
+   * the calendar-month rule, Q-10). Read-only proposal shown before publishing; null when the plan is inactive
+   * or has no weekly price. Never calculated in the browser.
+   */
+  monthlyPrice?: number | null;
   isMostPopular: boolean;
   isActive: boolean;
   sortOrder: number;
@@ -65,6 +71,16 @@ export type MealKey = 'breakfast' | 'lunch' | 'dinner';
 
 /** FR-20. Empty strings mean "not set yet" (client has not supplied it). */
 export interface SiteSettingsDraft {
+  businessName: string;
+  tagline: string;
+  /** Short place name used in headings, for example "Johar Town, Lahore". */
+  areaServed: string;
+  /** Exact delivery boundary wording (Q-11). */
+  deliveryBoundaryText: string;
+  /** Business legal name and address shown in the footer (Q-27). */
+  legalNameAndAddress: string;
+  /** Payment methods named on the site, in display order. */
+  paymentMethods: string[];
   whatsappNumber: string;
   instagramHandle: string;
   orderHours: string;
@@ -137,7 +153,7 @@ export interface MenuWeekView extends MenuWeek {
 // ---------- Publishing (FR-22) ----------
 
 export type ContentArea =
-  'Menu' | 'Plans' | 'Pricing rules' | 'Dishes' | 'Add-ons' | 'FAQ' | 'Settings';
+  'Menu' | 'Plans' | 'Pricing rules' | 'Dishes' | 'Add-ons' | 'FAQ' | 'Settings' | 'Images';
 
 export interface PendingChange {
   area: ContentArea;
@@ -177,6 +193,12 @@ export interface PublishOverview {
 export interface PublishResult {
   version: number;
   publishedAt: string;
+  /**
+   * Whether the public site was confirmed to serve this version right after the cache refresh (architecture
+   * sec. 8.1 step 4). False means the release is saved and live, but the cached pages may take up to a minute.
+   * Undefined for the mock.
+   */
+  visibleOnSite?: boolean;
 }
 
 // ---------- Customers, subscriptions, payments (FR-24..FR-30) ----------

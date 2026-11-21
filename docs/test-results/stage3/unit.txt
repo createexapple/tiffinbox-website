@@ -1,0 +1,16 @@
+
+> tiffinbox-website@0.1.0 test
+> vitest run
+
+
+ RUN  v5.1.1 /Users/alisabir/CreateexTech/tiffinbox-website
+
+
+ Test Files  24 passed (24)
+      Tests  253 passed (253)
+   Start at  03:40:27
+   Duration  2.32s (tests 64%, import 20%, transform 12%, worker 3%)
+
+    Isolate  24 workers spawned · ~273ms startup each (spawn + environment, per file)
+             at least ~323ms faster with isolate: false — reuses workers across files instead of one per file
+

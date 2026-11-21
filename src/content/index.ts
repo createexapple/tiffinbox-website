@@ -1,17 +1,17 @@
 /**
  * Public content read path (architecture sec. 5). Pages read ONLY through these functions.
  *
- * Today every function returns the labelled mock snapshot from ./mock. In Stage 3, `getContentSnapshot()`
- * becomes the Supabase-backed reader (`get_public_content`, last-good file fallback) and nothing else changes.
- * Each function is async so callers already handle a real network read.
+ * Stage 3: `getContentSnapshot()` (./reader) reads the published release through `get_public_content()`, cached
+ * with a tag and a 60 s lifetime, with a last-good file fallback. Under the test-only mock flag it serves the
+ * labelled sample content in ./mock instead. If nothing can be shown it throws `ContentUnavailableError`, which
+ * the public error boundary renders as the designed error state.
  */
 import { buildPageCopy } from './copy';
 import { lowestMealPrice } from './derive';
-import { MOCK_CONTENT } from './mock';
+import { getContentSnapshot } from './reader';
 import type {
   AddOn,
   ContentInfo,
-  ContentSnapshot,
   CustomDish,
   FaqItem,
   MenuWeek,
@@ -23,11 +23,10 @@ import type {
 
 export type * from './types';
 
-async function getContentSnapshot(): Promise<ContentSnapshot> {
-  return MOCK_CONTENT; // Stage 3: replace with the live reader.
-}
+export { ContentUnavailableError } from './reader';
+export { ContentShapeError } from './live';
 
-/** Where the content comes from ("mock" until Stage 3); drives the Stage 2 preview banner. */
+/** Where the content comes from ("live", "preview", or "mock" under the test flag); drives the banners. */
 export async function getContentInfo(): Promise<ContentInfo> {
   return (await getContentSnapshot()).info;
 }

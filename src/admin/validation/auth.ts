@@ -1,6 +1,7 @@
 /**
- * Login form validation (A-01). MOCK AUTH (Stage 2): this only checks that the fields are filled in and
- * look right. There is no real authentication, no password is stored, compared or logged.
+ * Login form validation (A-01, FR-13). Runs in the browser for instant messages and again on the server in the
+ * sign-in action (the server never trusts the client). It only checks the shape of the fields; whether the
+ * credentials are right is decided by Supabase Auth, and the answer is always the same generic message.
  */
 import { checkText, fail, hasErrors, type FieldErrors, type Validation } from './common';
 
@@ -11,6 +12,7 @@ export interface LoginInput {
 export type LoginField = keyof LoginInput;
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const MAX_PASSWORD_LENGTH = 200;
 
 export function validateLogin(input: LoginInput): Validation<{ email: string }, LoginField> {
   const errors: FieldErrors<LoginField> = {};
@@ -20,6 +22,8 @@ export function validateLogin(input: LoginInput): Validation<{ email: string }, 
     errors.email = 'Enter a valid email address, like name@example.com.';
   }
   if (input.password === '') errors.password = 'Enter your password.';
+  else if (input.password.length > MAX_PASSWORD_LENGTH)
+    errors.password = 'That password is too long.';
   if (hasErrors(errors)) return fail(errors);
   return { ok: true, value: { email } };
 }

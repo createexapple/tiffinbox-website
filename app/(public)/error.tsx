@@ -34,9 +34,11 @@ export default function PublicError({
           <button type="button" className="btn btn-primary btn-lg" onClick={() => retry()}>
             Try again
           </button>
-          <WhatsAppButton link={link} variant="inline">
-            Ask on WhatsApp
-          </WhatsAppButton>
+          {link.ready ? (
+            <WhatsAppButton link={link} variant="inline">
+              Ask on WhatsApp
+            </WhatsAppButton>
+          ) : null}
         </div>
       </div>
     </section>

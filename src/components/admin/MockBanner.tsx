@@ -6,9 +6,9 @@ import { useAdmin } from './AdminProvider';
 const SCENARIOS = Object.keys(SCENARIO_LABEL) as MockScenario[];
 
 /**
- * STAGE 2 ONLY. Honest label on every admin screen: the data is synthetic and nothing is saved.
- * The "Mock controls" let a reviewer reach states that are otherwise hard to reach (empty data, failures).
- * Removed when the Supabase repository replaces the mock (Stage 3).
+ * TEST MODE ONLY (explicit test flag, never in a deployed environment). Honest label on every admin screen: the data
+ * is synthetic and nothing is saved. The "Mock controls" let a test reach states that are otherwise hard to reach
+ * (empty data, failures). Not rendered when the real backend is in use.
  */
 export function AdminMockBanner() {
   const { controls, version } = useAdmin();
@@ -22,8 +22,8 @@ export function AdminMockBanner() {
       <div className="adm-mock-row">
         <strong>Mock data: nothing is saved.</strong>
         <span>
-          Sample records are fake. Changes last only until you reload this page. Sign-in is a mock
-          too: nothing is checked or stored. Sample date: Sun 22 Nov 2026.
+          Test mode: sample records are fake and changes last only until you reload this page. No
+          real backend is connected and no login is checked. Sample date: Sun 22 Nov 2026.
         </span>
       </div>
       {controls && flags && scenario ? (

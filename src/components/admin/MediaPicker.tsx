@@ -4,8 +4,29 @@ import { useState } from 'react';
 import { useQuery } from './AdminProvider';
 import { Dialog, QueryBoundary } from './ui';
 
-/** Placeholder tile: the client has not supplied photos, so no stock images are used (AS-04). */
-export function MediaTile({ fileName, label }: { fileName: string; label?: string }) {
+/** Photo tile; a labelled placeholder when there is no stored photo (the client's own photos only, AS-04). */
+export function MediaTile({
+  fileName,
+  label,
+  url,
+}: {
+  fileName: string;
+  label?: string;
+  /** Public URL of the stored photo; absent for the test mock, which shows the placeholder. */
+  url?: string;
+}) {
+  if (url) {
+    // Admin thumbnail of a stored master (already resized to 2000 px): no image optimiser needed.
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={url}
+        alt={label ?? fileName}
+        loading="lazy"
+        style={{ width: '100%', borderRadius: 'var(--r-md)' }}
+      />
+    );
+  }
   return (
     <div className="ph" role="img" aria-label={label ?? `Placeholder for ${fileName}`}>
       <span>

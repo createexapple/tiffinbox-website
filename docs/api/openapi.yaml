@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
-  title: Tiffin Box website + admin - HTTP surface (outline)
-  version: 0.1.0-draft
+  title: Tiffin Box website + admin - HTTP surface
+  version: 0.2.0-stage3
   description: |
-    Stage 0 OUTLINE ONLY. Nothing here is implemented or tested.
+    Stage 3 (implemented; see docs/backend.md for what was and was not run against the real staging project).
 
     This project has NO custom REST API (docs/architecture.md, ADR-0001, ADR-0002).
     The admin dashboard changes data through Next.js server actions, which are
@@ -11,17 +11,31 @@ info:
     listed as paths. They are catalogued under `x-server-actions` at the bottom.
 
     The HTTP surface that really exists is:
-      1. Two route handlers in the web app (tag: app).
-      2. Database functions we write, exposed by Supabase at /rest/v1/rpc/* (tag: rpc).
+      1. Route handlers in the web app (tag: app): /api/health, /api/revalidate, /admin/preview.
+      2. Database functions we wrote, exposed by Supabase at /rest/v1/rpc/* (tag: rpc).
          They are called server-to-server by the web app. They are listed because they
          are reachable over HTTPS by anyone who has the project URL and public key,
-         so their authorisation is part of the contract.
-      3. Supabase's own generated endpoints: table access at /rest/v1/<table>,
+         so their authorisation is part of the contract: only get_public_content() is
+         executable by the public role; every other function starts with an admin check
+         and answers PT403 to anyone else.
+      3. Supabase's own generated endpoints: table and view access at /rest/v1/<name>,
          Auth at /auth/v1/*, Storage at /storage/v1/*. These are vendor-defined and
          not redefined here. Table access is governed by row-level security:
-         the public role has no table grants; active admins have the rights in
-         docs/architecture.md section 7. Supabase publishes the generated table
-         spec at /rest/v1/ ; export it at Stage 3 instead of hand-writing it.
+         the public role has no table or view grants at all; active admins have the rights in
+         docs/database.md sec. 3. The app reads these views with the admin's own session:
+         subscription_status, period_payment_status, subscription_balance, customer_summary,
+         menu_week_status, dashboard_overview, change_history. Supabase publishes the generated
+         spec at /rest/v1/ ; it is not copied here.
+
+    Contract notes (docs/database.md sec. 10): menu `day_of_week` is 1 = Monday in the database
+    and 0 = Monday in the admin UI (mapped in src/admin/server/mappers.ts); menu status `published`
+    in the database is shown as `live` in the UI; customer phones are stored as +923XXXXXXXXX and
+    shown as 03XXXXXXXXX.
+
+    Error mapping (src/admin/server/errors.ts): PostgREST returns `{code, message, details, hint}`.
+    PT400 = validation failed (details is a JSON array of {field, message}; nothing changed) becomes a
+    field-level or "blocked" (publish) error; PT403 = not an active admin becomes "forbidden"; PT404
+    becomes "not found". Database messages other than PT400 details are never shown to the user.
 
     Update this file in the same PR as any change to a route handler or database function.
 servers:
@@ -57,8 +71,12 @@ paths:
   /api/revalidate:
     post:
       tags: [app]
-      summary: Refresh cached public pages
-      description: Called by the Supabase Cron go-live notifier (and usable in the post-deploy smoke test). Admin publishing refreshes the cache inside its server action and does not need this endpoint. Rate limited.
+      summary: Expire the cached public content
+      description: |
+        Called by the Supabase Cron go-live notifier (docs/architecture.md sec. 8.4) and usable in the post-deploy
+        smoke test. Admin publishing expires the same cache tag inside its server action and does not need this
+        endpoint. Authenticated with a shared secret (`Authorization: Bearer <REVALIDATE_SECRET>`). With no secret
+        configured the route answers 503 and never acts. Rate limited to 30 requests a minute per caller address.
       security:
         - revalidateSecret: []
       requestBody:
@@ -69,15 +87,55 @@ paths:
               $ref: '#/components/schemas/RevalidateRequest'
       responses:
         '200':
-          description: Cache refresh requested
+          description: Cache tag expired; the next visit re-reads the database
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RevalidateResult'
+        '400':
+          $ref: '#/components/responses/Error'
         '401':
           $ref: '#/components/responses/Error'
         '429':
           $ref: '#/components/responses/Error'
+        '503':
+          description: REVALIDATE_SECRET is not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /admin/preview:
+    get:
+      tags: [app]
+      summary: Turn draft preview on or off for the signed-in admin
+      description: |
+        Admin only (the auth proxy redirects anyone else to the login page; the handler checks again). Enables
+        the framework's draft mode and redirects to a public page that then renders the draft content, fetched
+        with the admin's own session (the cookie alone grants nothing). `to` must be one of a fixed list of local
+        paths. Not a link to prefetch: it has a side effect, so the UI uses a plain anchor.
+      security:
+        - adminSession: []
+      parameters:
+        - name: to
+          in: query
+          schema:
+            type: string
+            enum: ['/', '/menu', '/plans', '/customize', '/about', '/how-it-works', '/admin/publish', '/admin/menu']
+        - name: week
+          in: query
+          description: Menu week (uuid) whose working slots the menu page previews
+          schema:
+            type: string
+            format: uuid
+        - name: disable
+          in: query
+          description: "1 turns preview off"
+          schema:
+            type: string
+            enum: ['1']
+      responses:
+        '307':
+          description: Redirect to the chosen page, or to the login page without an admin session
   /rest/v1/rpc/get_public_content:
     post:
       tags: [rpc]
@@ -217,6 +275,50 @@ paths:
           $ref: '#/components/responses/Error'
         '403':
           $ref: '#/components/responses/Error'
+  /rest/v1/rpc/save_menu_week:
+    post:
+      tags: [rpc]
+      summary: Save the 21 working slots of a menu week, creating the week if needed (admin only)
+      description: Refreshes the snapshot of a SCHEDULED week in the same transaction; a live week keeps its snapshot until released again (FR-14).
+      security:
+        - supabaseKey: []
+          adminJwt: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [week_start, slots]
+              properties:
+                week_start:
+                  type: string
+                  format: date
+                  description: Monday of the week
+                slots:
+                  type: array
+                  minItems: 21
+                  maxItems: 21
+                  items:
+                    type: object
+                    required: [day_of_week, meal, dish_text, not_served]
+                    properties:
+                      day_of_week: { type: integer, minimum: 1, maximum: 7, description: 1 = Monday }
+                      meal: { type: string, enum: [breakfast, lunch, dinner] }
+                      dish_text: { type: string, maxLength: 200 }
+                      not_served: { type: boolean }
+                      media_id: { type: string, format: uuid, nullable: true }
+      responses:
+        '200':
+          description: Menu week with its derived status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuWeekStatus'
+        '400':
+          $ref: '#/components/responses/RpcError'
+        '403':
+          $ref: '#/components/responses/RpcError'
   /rest/v1/rpc/copy_menu_week:
     post:
       tags: [rpc]
@@ -339,6 +441,11 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: Supabase Auth access token of a signed-in user who has an active row in admin_users.
+    adminSession:
+      type: apiKey
+      in: cookie
+      name: sb-<project-ref>-auth-token
+      description: HTTP-only Supabase session cookie set by the sign-in server action.
   responses:
     Error:
       description: Error
@@ -346,6 +453,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    RpcError:
+      description: PostgREST error from a database function (PT400 validation, PT403 not an admin, PT404 not found)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RpcError'
   schemas:
     Error:
       type: object
@@ -360,6 +473,14 @@ components:
           type: object
           additionalProperties:
             type: string
+    RpcError:
+      type: object
+      description: PostgREST's error shape. For PT400, `details` is a JSON array of {field, message} (as text).
+      properties:
+        code: { type: string, example: PT400 }
+        message: { type: string }
+        details: { type: string, nullable: true }
+        hint: { type: string, nullable: true }
     Health:
       type: object
       properties:
@@ -424,6 +545,8 @@ components:
     SiteSettings:
       type: object
       properties:
+        business_name: { type: string }
+        tagline: { type: string }
         whatsapp_number:
           type: string
           description: Digits only, international format, for wa.me links
@@ -431,7 +554,17 @@ components:
           type: string
         order_hours:
           type: string
+        last_order_time:
+          type: string
+          description: HH:mm or empty
+        area_served:
+          type: string
+          description: Short place name for headings and the footer
         delivery_area_text:
+          type: string
+        delivery_boundary_text:
+          type: string
+        legal_name_and_address:
           type: string
         delivery_times:
           type: object
@@ -445,8 +578,18 @@ components:
             breakfast: { type: string }
             lunch: { type: string }
             dinner: { type: string }
+        skip_cutoff_days:
+          type: object
+          description: Whether each skip cut-off is the night before or the same day
+          properties:
+            breakfast: { type: string, enum: [night_before, same_day] }
+            lunch: { type: string, enum: [night_before, same_day] }
+            dinner: { type: string, enum: [night_before, same_day] }
         skips_per_week:
           type: integer
+        payment_methods:
+          type: array
+          items: { type: string }
     PricingRules:
       type: object
       properties:
@@ -523,8 +666,19 @@ components:
     DraftStatus:
       type: object
       properties:
-        has_unpublished_changes: { type: boolean }
-        current_release_version: { type: integer }
+        has_unpublished_changes: { type: boolean, description: Checksum of the draft document differs from the live release }
+        current_release_version: { type: integer, nullable: true }
+        changed_areas:
+          type: array
+          items: { type: string, enum: [Settings, Pricing rules, Plans, Dishes, Add-ons, FAQ, Images] }
+        publish_errors:
+          type: array
+          description: Reasons publishing would be refused (empty when publishable)
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              message: { type: string }
         scheduled_menu:
           $ref: '#/components/schemas/MenuWeekStatus'
     ReleaseSummary:
@@ -546,7 +700,7 @@ components:
       properties:
         id: { type: string, format: uuid }
         week_start: { type: string, format: date }
-        status: { type: string, enum: [draft, scheduled, published, past] }
+        status: { type: string, enum: [draft, scheduled, published, past], description: "The UI shows published as live" }
         go_live_at: { type: string, format: date-time, nullable: true }
         differs_from_released: { type: boolean }
     SubscriptionCreate:
@@ -573,13 +727,14 @@ components:
         payment_status: { type: string, enum: [paid, unpaid, overdue] }
         balance: { type: integer }
 x-server-actions:
-  description: Not HTTP endpoints. Next.js server actions; each starts with requireAdmin(), validates input with zod, and writes with the admin's own identity so RLS applies. Listed for traceability only.
-  auth: [login, logout, changePassword]
-  content: [saveSettings, savePricingRules, savePlan, reorderPlans, saveDish, deleteDish, reorderDishes, saveAddon, deleteAddon, reorderAddons, saveFaqEntry, deleteFaqEntry, reorderFaq, setPageImage]
-  menu: [saveMenuWeek, copyMenuWeek, releaseMenuWeek]
-  media: [createUploadUrl, finaliseUpload, updateAltText, deleteMedia]
-  publishing: [enablePreview, disablePreview, publishContent, rollbackRelease]
-  customers: [saveCustomer, archiveCustomer, unarchiveCustomer, anonymiseCustomer, searchCustomers]
-  subscriptions: [createSubscription, updateSubscription, setManualState, renewSubscription, savePeriod]
-  payments: [recordPayment, updatePayment, voidPayment]
-  settings: [saveOpsSettings]
+  description: Not HTTP endpoints. Next.js server actions in src/admin/server/*.ts; each starts with requireAdmin() (server-side session + active admin check), validates its input with the shared validation modules, writes with the admin's own identity so RLS applies, and returns a serialisable result (never throws to the browser). Sign-in is the one action that runs before a session exists. Listed for traceability only.
+  auth: [signInAction, signOutAction, getSessionAction, changePasswordAction]
+  content: [getSettingsAction, saveSettingsAction, listPlansAction, savePlansAction, getPricingRulesAction, savePricingRulesAction, listDishesAction, saveDishAction, removeDishAction, moveDishAction, listAddonsAction, saveAddonAction, removeAddonAction, moveAddonAction, listFaqAction, saveFaqAction, removeFaqAction, moveFaqAction]
+  menu: [listMenuWeeksAction, saveMenuWeekAction, copyMenuWeekAction, scheduleMenuWeekAction, cancelMenuScheduleAction, publishMenuNowAction]
+  media: [listMediaAction, uploadMediaAction, deleteMediaAction]
+  publishing: [getPublishOverviewAction, publishAction, rollbackAction, listAuditAction]
+  overview: [getOverviewAction, getClockAction]
+  customers: [listCustomersAction, getCustomerDetailAction, createCustomerAction, updateCustomerAction, archiveCustomerAction, restoreCustomerAction, findDuplicatePhoneAction]
+  subscriptions: [getSubscriptionAction, createSubscriptionAction, updateSubscriptionAction, findOverlapAction]
+  payments: [listDuesAction, listPaymentsAction, getPaymentAction, createPaymentAction, updatePaymentAction, voidPaymentAction, findDuplicateReferenceAction]
+  not-yet-in-the-ui: [anonymise_customer (database function exists and is tested; no screen calls it yet), in-app admin user management (accounts are created in the Supabase dashboard)]

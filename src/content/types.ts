@@ -70,6 +70,11 @@ export interface MenuWeek {
   weekEnd: string;
   publishedAt: string;
   days: MenuDay[];
+  /**
+   * Set by the live reader from the database (`is_current_week`): false when the newest released week is older
+   * than this calendar week (FR-06 "last updated" case). Absent in mock content, where the page derives it.
+   */
+  isCurrent?: boolean;
 }
 
 export interface CustomDish {
@@ -93,9 +98,14 @@ export interface FaqItem {
 
 /** Where the content comes from, so pages can say so honestly. */
 export interface ContentInfo {
-  source: 'mock' | 'live';
+  /** "mock": test-only sample content. "live": the published release. "preview": admin draft preview. */
+  source: 'mock' | 'live' | 'preview';
   /** Shown in the banner when source is "mock". */
   note: string;
+  /** Published release version when `source` is "live" or "preview" has none (null). */
+  releaseVersion?: number | null;
+  /** True when the document came from the last-good file because the backend could not be reached (NFR-08). */
+  stale?: boolean;
 }
 
 /** Everything the content layer can hold, as one object. Used by the mock module and, later, the live source. */

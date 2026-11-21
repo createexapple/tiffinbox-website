@@ -1,0 +1,17 @@
+
+> tiffinbox-website@0.1.0 test:e2e:staging
+> node --env-file-if-exists=.env.local ./node_modules/@playwright/test/cli.js test -c playwright.staging.config.ts admin-flows
+
+.env.local not found. Continuing without it.
+
+Running 7 tests using 1 worker
+
+  -  1 [chromium] › tests/staging/admin-flows.spec.ts:13:1 › sign in, see the dashboard on real figures, stay signed in on reload, log out
+  -  2 [chromium] › tests/staging/admin-flows.spec.ts:28:1 › customers: create, find by search, archive (cleans up after itself)
+  -  3 [chromium] › tests/staging/admin-flows.spec.ts:49:1 › history lists the change that was just made, with the actor
+  -  4 [chromium] › tests/staging/admin-flows.spec.ts:55:1 › settings: a draft change round-trips and is restored; the settings page has the new fields
+  -  5 [chromium] › tests/staging/admin-flows.spec.ts:79:1 › preview: the Publish screen opens the public site with drafts and the Preview bar, and it can be exited
+  -  6 [chromium] › tests/staging/admin-flows.spec.ts:95:1 › password change: a wrong current password is refused with a clear message
+  -  7 [chromium] › tests/staging/admin-flows.spec.ts:107:1 › image upload: a text file renamed .jpg is refused by the server
+
+  7 skipped

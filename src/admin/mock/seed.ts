@@ -106,6 +106,12 @@ const NEXT_WEEK = slotsFrom([
 function baseContent(): ContentSnapshot {
   return {
     settings: {
+      businessName: 'Tiffin Box',
+      tagline: 'Ghar ka khana, Ammi ke pyaar jaisa',
+      areaServed: 'Johar Town, Lahore',
+      deliveryBoundaryText: '',
+      legalNameAndAddress: '',
+      paymentMethods: ['JazzCash', 'Easypaisa', 'bank transfer'],
       whatsappNumber: '',
       instagramHandle: 'tiffinbox.lhr',
       orderHours: '',

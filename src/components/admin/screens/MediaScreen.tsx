@@ -11,15 +11,15 @@ import { Alert, Dialog, EmptyState, PageHead, QueryBoundary } from '../ui';
 
 interface Pending {
   fileName: string;
-  type: string;
-  size: number;
-  altText: string;
 }
 
+/** Shows the upload state for at least this long so the progress bar is readable even for a small photo. */
+const MIN_UPLOAD_SHOWN_MS = 500;
+
 /**
- * A-09 (FR-21). STAGE 2 MOCK: the chosen file is checked (type, size, alt text) but never read or stored;
- * the library shows a labelled placeholder tile. Real upload, re-encode and metadata stripping are Stage 3
- * (architecture sec. 8.5). No stock or generated food images are used (AS-04).
+ * A-09 (FR-21). The chosen file is checked in the browser (type, size, alt text) for instant messages, then sent
+ * to the server action, which checks again by decoding the image, strips location data and other metadata, and
+ * stores a sanitised master. Real photos of your own food only; no stock or generated images (AS-04).
  */
 export function MediaScreen() {
   const { repo } = useAdmin();
@@ -35,33 +35,32 @@ export function MediaScreen() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Simulated upload progress; completes the (mock) upload when it reaches 100.
+  // Progress eases towards 90% while the server works; it jumps to 100% when the upload finishes.
   useEffect(() => {
     if (!pending) return;
-    const timer = setInterval(() => setProgress((p) => Math.min(100, p + 20)), 250);
+    const timer = setInterval(() => setProgress((p) => Math.min(90, p + 15)), 250);
     return () => clearInterval(timer);
   }, [pending]);
 
-  useEffect(() => {
-    if (!pending || progress < 100) return;
-    const file = pending;
-    repo
-      .uploadMedia({ fileName: file.fileName, type: file.type, size: file.size }, file.altText)
-      .then(
-        () => {
-          setPending(null);
-          setProgress(0);
-          setAlt('');
-          if (fileRef.current) fileRef.current.value = '';
-          toast({ text: `Uploaded ${file.fileName}. Available to choose in dishes and pages.` });
-        },
-        (e: unknown) => {
-          setPending(null);
-          setProgress(0);
-          setError(e instanceof Error ? e.message : 'The upload failed. Nothing was saved.');
-        },
-      );
-  }, [pending, progress, repo, toast]);
+  async function startUpload(file: File, altText: string) {
+    setPending({ fileName: file.name });
+    setProgress(10);
+    try {
+      await Promise.all([
+        repo.uploadMedia(file, altText),
+        new Promise((resolve) => setTimeout(resolve, MIN_UPLOAD_SHOWN_MS)),
+      ]);
+      setProgress(100);
+      setAlt('');
+      if (fileRef.current) fileRef.current.value = '';
+      toast({ text: `Uploaded ${file.name}. Available to choose in dishes and pages.` });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'The upload failed. Nothing was saved.');
+    } finally {
+      setPending(null);
+      setProgress(0);
+    }
+  }
 
   function onUpload(event: FormEvent) {
     event.preventDefault();
@@ -74,8 +73,7 @@ export function MediaScreen() {
     setFileErrors(problems);
     setAltError(altProblem);
     if (problems.length > 0 || altProblem || !file) return;
-    setProgress(0);
-    setPending({ fileName: file.name, type: file.type, size: file.size, altText: alt.trim() });
+    void startUpload(file, alt.trim());
   }
 
   async function confirmDelete(row: MediaRow) {
@@ -92,7 +90,7 @@ export function MediaScreen() {
     <>
       <PageHead
         title="Images"
-        sub="Real photos of your own food only. This Stage 2 screen shows placeholders and does not store files."
+        sub="Real photos of your own food only. Location data is removed from every photo automatically."
         actions={
           <button type="button" className="btn btn-secondary" onClick={() => setPickerOpen(true)}>
             Preview the image picker
@@ -128,7 +126,7 @@ export function MediaScreen() {
             />
             <span className="hint" id="media-file-h">
               JPG, PNG or WebP, up to {MEDIA_MAX_BYTES / (1024 * 1024)} MB. Location data is removed
-              automatically (Stage 3).
+              automatically.
             </span>
           </div>
           <TextField
@@ -155,19 +153,6 @@ export function MediaScreen() {
               >
                 <span style={{ width: `${progress}%` }} />
               </div>
-              <p>
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  style={{ marginTop: 'var(--sp-3)' }}
-                  onClick={() => {
-                    setPending(null);
-                    setProgress(0);
-                  }}
-                >
-                  Cancel upload
-                </button>
-              </p>
             </div>
           ) : (
             <button type="submit" className="btn btn-primary">
@@ -188,7 +173,7 @@ export function MediaScreen() {
             <div className="media-grid">
               {media.map((m) => (
                 <figure key={m.id}>
-                  <MediaTile fileName={m.fileName} label={m.altText} />
+                  <MediaTile fileName={m.fileName} label={m.altText} url={m.url} />
                   <figcaption>
                     <b>{m.usedOn.length > 0 ? 'Used' : 'Not used'}</b>
                     <br />

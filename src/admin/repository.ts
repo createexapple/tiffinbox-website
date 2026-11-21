@@ -1,10 +1,9 @@
 /**
- * The only way admin screens read and write data. Every method is async so that a real network call
- * fits later without changing screens.
+ * The only way admin screens read and write data. Every method is async.
  *
- * Stage 2: implemented by the in-memory mock in ./mock (nothing is saved; the mock banner says so).
- * Stage 3: implemented by Supabase server actions (architecture sec. 4, `src/admin/*` by area), one
- * class swapped in `src/components/admin/AdminProvider.tsx`; screens are not touched.
+ * Stage 3: implemented by `ActionsAdminRepository` (./actions-repository), which calls the Supabase-backed
+ * server actions in ./server (architecture sec. 4, grouped by area). The in-memory mock in ./mock implements the
+ * same interface and is used ONLY by network-free unit and e2e tests (explicit test flag, see src/lib/env.ts).
  */
 import type {
   AddonDraft,
@@ -33,15 +32,30 @@ import type {
 } from './types';
 import type { SubscriptionValue, PaymentValue } from './validation/operations';
 
-export type RepoErrorCode = 'load_failed' | 'publish_failed' | 'blocked' | 'not_found' | 'invalid';
+export type RepoErrorCode =
+  | 'load_failed'
+  | 'publish_failed'
+  | 'save_failed'
+  | 'blocked'
+  | 'not_found'
+  | 'invalid'
+  /** The database refused: the account is not an active admin (PT403 / RLS). */
+  | 'forbidden'
+  /** The session is gone or timed out; the client sends the admin to the login page. */
+  | 'unauthenticated'
+  /** Too many sign-in attempts. */
+  | 'throttled';
 
 /** Server-side failure to show to the admin (every form shows server errors, not only client ones). */
 export class RepoError extends Error {
   readonly code: RepoErrorCode;
-  constructor(code: RepoErrorCode, message: string) {
+  /** Field-level messages when the database rejected specific fields (PT400), keyed by the database field name. */
+  readonly fields?: Record<string, string>;
+  constructor(code: RepoErrorCode, message: string, fields?: Record<string, string>) {
     super(message);
     this.name = 'RepoError';
     this.code = code;
+    if (fields) this.fields = fields;
   }
 }
 
@@ -61,6 +75,8 @@ export type FaqValues = Pick<FaqDraft, 'question' | 'answer' | 'isHidden'>;
 
 export interface MediaRow extends MediaItem {
   usedOn: string[];
+  /** Public URL of the stored photo (absent in the test mock). */
+  url?: string;
 }
 
 export interface PlanValues {
@@ -89,8 +105,13 @@ export interface AdminRepository {
   getToday(): Promise<string>;
   /** Current instant (ISO). The mock returns its own clock so sample statuses stay deterministic. */
   getNow(): Promise<string>;
-  /** Mock: a fixed sample staff account. Stage 3: the signed-in admin. */
+  /** The signed-in admin (the mock returns a fixed sample account). */
   getSession(): Promise<{ displayName: string; email: string }>;
+  /** FR-13. Rejects with `RepoError` code "invalid" (wrong credentials, generic) or "throttled". */
+  signIn(email: string, password: string): Promise<void>;
+  signOut(): Promise<void>;
+  /** FR-13: needs the current password. Rejects with "invalid" and `fields` (current / next) on bad input. */
+  changePassword(current: string, next: string, repeat: string): Promise<void>;
 
   // ---- Website content (drafts) ----
   getSettings(): Promise<{ site: SiteSettingsDraft; ops: OpsSettings }>;
@@ -106,10 +127,8 @@ export interface AdminRepository {
   addons: OrderedCollection<AddonDraft, AddonValues>;
   faq: OrderedCollection<FaqDraft, FaqValues>;
   listMedia(): Promise<MediaRow[]>;
-  uploadMedia(
-    file: { fileName: string; type: string; size: number },
-    altText: string,
-  ): Promise<MediaRow>;
+  /** The server checks type, size and content again, strips metadata, and stores a sanitised master. */
+  uploadMedia(file: File, altText: string): Promise<MediaRow>;
   deleteMedia(id: string): Promise<void>;
 
   // ---- Menu weeks ----

@@ -1,0 +1,62 @@
+
+> tiffinbox-website@0.1.0 build
+> next build
+
+▲ Next.js 16.4.6 (Turbopack)
+✓ Running next.config.ts took 35ms
+- Experiments (use with caution):
+  · serverActions
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1149ms
+  Running TypeScript ...
+  Finished TypeScript in 3.1s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/4) ...
+  Generating static pages using 11 workers (1/4) 
+  Generating static pages using 11 workers (2/4) 
+  Generating static pages using 11 workers (3/4) 
+✓ Generating static pages using 11 workers (4/4) in 165ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /about
+├ ƒ /admin
+├ ƒ /admin/addons
+├ ƒ /admin/customers
+├ ƒ /admin/customers/[id]
+├ ƒ /admin/customers/[id]/edit
+├ ƒ /admin/customers/[id]/subscriptions/new
+├ ƒ /admin/customers/new
+├ ƒ /admin/dishes
+├ ƒ /admin/faq
+├ ƒ /admin/history
+├ ƒ /admin/login
+├ ƒ /admin/media
+├ ƒ /admin/menu
+├ ƒ /admin/payments
+├ ƒ /admin/payments/[id]
+├ ƒ /admin/payments/new
+├ ƒ /admin/plans
+├ ƒ /admin/preview
+├ ƒ /admin/publish
+├ ƒ /admin/settings
+├ ƒ /admin/subscriptions/[id]/edit
+├ ƒ /admin/subscriptions/[id]/renew
+├ ƒ /api/health
+├ ƒ /api/revalidate
+├ ƒ /customize
+├ ƒ /how-it-works
+├ ƒ /menu
+├ ƒ /plans
+├ ○ /robots.txt
+└ ○ /sitemap.xml
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

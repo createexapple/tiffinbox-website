@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { addDays, daysBetween, inclusiveDays, isIsoDate, rangesOverlap } from '@/admin/dates';
 import {
-  badgeFor,
   isRenewalDue,
   menuWeekStatus,
   periodPaymentStatus,
   pickCurrentSubscription,
   subscriptionStatus,
   worstPaymentStatus,
-} from '@/admin/status';
+} from '@/admin/mock/status-rules';
+import { badgeFor } from '@/admin/status';
 
 const TODAY = '2026-11-22';
 

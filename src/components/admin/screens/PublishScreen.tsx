@@ -10,6 +10,11 @@ import { StatusIcon } from '../icons';
 import { useToast } from '../Toast';
 import { Alert, Dialog, PageHead, QueryBoundary, StatusBadge } from '../ui';
 
+/** A plain link (not next/link): it turns draft mode on, so it must never be prefetched. */
+function previewHref(path: string): string {
+  return `/admin/preview?to=${encodeURIComponent(path)}`;
+}
+
 type Outcome =
   | { kind: 'none' }
   | { kind: 'success'; result: PublishResult }
@@ -72,6 +77,9 @@ export function PublishScreen() {
                   The live site now shows version v{outcome.result.version} (
                   {formatDateTimeWithWeekday(outcome.result.publishedAt)}). The publish time is
                   saved in Change history.
+                  {outcome.result.visibleOnSite === false
+                    ? ' The cached pages could not be confirmed yet; visitors will see it within a minute.'
+                    : ''}
                 </Alert>
               ) : null}
               {outcome.kind === 'failure' ? (
@@ -112,8 +120,8 @@ export function PublishScreen() {
               ) : null}
 
               <Alert tone="info" title="Preview shows your drafts on the real pages.">
-                Stage 2: the links below open the public pages with sample content, not your drafts.
-                Draft preview with the yellow “Preview” bar is built in Stage 3.
+                The preview links open the public pages with your unpublished drafts and a yellow
+                “Preview” bar. Only you can see it, and nothing is live until you publish.
               </Alert>
 
               <section
@@ -149,9 +157,9 @@ export function PublishScreen() {
                             <th scope="row">{c.area}</th>
                             <td data-label="Change">{c.summary}</td>
                             <td data-label="Preview">
-                              <Link href={c.previewHref} target="_blank" rel="noopener">
+                              <a href={previewHref(c.previewHref)} target="_blank" rel="noopener">
                                 Open preview<span className="sr-only"> of {c.area} (new tab)</span>
-                              </Link>
+                              </a>
                             </td>
                           </tr>
                         ))}
@@ -196,10 +204,15 @@ export function PublishScreen() {
                   ))}
                 </ul>
                 <div className="cta-row">
-                  <Link className="btn btn-secondary" href="/" target="_blank" rel="noopener">
+                  <a
+                    className="btn btn-secondary"
+                    href={previewHref('/')}
+                    target="_blank"
+                    rel="noopener"
+                  >
                     Open preview of the whole site
                     <span className="sr-only"> (new tab)</span>
-                  </Link>
+                  </a>
                   <button
                     type="button"
                     className="btn btn-primary"

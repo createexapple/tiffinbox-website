@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { PaymentFormScreen } from '@/components/admin/screens/PaymentFormScreen';
+import { requireAdminPage } from '@/lib/auth/session';
 
 export const metadata: Metadata = { title: 'Record payment' };
 
@@ -9,6 +10,7 @@ export default async function Page({
 }: {
   searchParams: Promise<{ customer?: string; subscription?: string }>;
 }) {
+  await requireAdminPage(); // layer 2: every admin route re-checks the session (architecture sec. 7)
   const { customer, subscription } = await searchParams;
   return (
     <PaymentFormScreen

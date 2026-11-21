@@ -1,16 +1,18 @@
 /**
- * MOCK REPOSITORY (Stage 2): in-memory implementation of `AdminRepository`.
- * NOTHING IS SAVED. State lives in memory for the browser session and is lost on reload; the admin shell
- * shows a "Mock data - nothing is saved" banner. Stage 3 replaces this class with Supabase server actions.
+ * MOCK REPOSITORY: in-memory implementation of `AdminRepository`, used ONLY by network-free unit and e2e tests
+ * (selected by the explicit test flag in src/lib/env.ts, never in a deployed environment). NOTHING IS SAVED.
+ * State lives in memory for the browser session and is lost on reload; the admin shell shows a "test mode" banner.
+ * The real implementation is `ActionsAdminRepository` (Supabase server actions).
  *
- * It also stands in for the SQL views (statuses, balances, overview counts) using src/admin/status.ts and
- * src/admin/ledger.ts, so screens only display values the repository provides.
- * Mock-only controls (scenarios, simulated failures) are on `MockControls`, not on the repository.
+ * It stands in for the SQL views (statuses, balances, overview counts) using ./status-rules and ./ledger, so
+ * screens only display values the repository provides. Mock-only controls (scenarios, simulated failures) are on
+ * `MockControls`, not on the repository.
  */
 import { formatRs } from '@/lib/format';
 import { addDays, daysBetween } from '../dates';
 import { PAYMENT_METHOD_LABEL, dateKeyOf, rangeLabel, weekLabel } from '../format';
-import { activePayments, allocatePayments, balanceOf, sumAmounts } from '../ledger';
+import { activePayments, sumAmounts } from '../ledger';
+import { allocatePayments, balanceOf, monthlyPriceCheck } from './ledger';
 import { findDuplicatePhone, findDuplicateReference, findOverlappingSubscription } from '../rules';
 import {
   RepoError,
@@ -31,7 +33,7 @@ import {
   slotsEqual,
   subscriptionStatus,
   worstPaymentStatus,
-} from '../status';
+} from './status-rules';
 import type {
   AddonDraft,
   AuditEntry,
@@ -378,6 +380,10 @@ export class MockAdminStore implements AdminRepository, MockControls {
   getToday = async () => MOCK_TODAY;
   getNow = async () => this.nowIso();
   getSession = async () => ({ ...MOCK_ACCOUNT });
+  /** Test mode: any well-formed input signs in; nothing is checked, stored or sent. */
+  signIn = async () => undefined;
+  signOut = async () => undefined;
+  changePassword = async () => undefined;
 
   // ---------- website content ----------
 
@@ -405,7 +411,17 @@ export class MockAdminStore implements AdminRepository, MockControls {
   };
 
   listPlans = () =>
-    this.read(() => [...this.state.plans].sort((a, b) => a.sortOrder - b.sortOrder));
+    this.read(() =>
+      [...this.state.plans]
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((plan) => ({
+          ...plan,
+          monthlyPrice:
+            plan.isActive && plan.weeklyPrice !== null
+              ? monthlyPriceCheck(plan.weeklyPrice, this.state.pricingRules.monthlySavingPercent)
+              : null,
+        })),
+    );
 
   savePlans = async (
     values: { id: string; values: PlanValues }[],
@@ -472,18 +488,18 @@ export class MockAdminStore implements AdminRepository, MockControls {
       this.state.media.map((m) => ({ ...m, usedOn: this.mediaUsage(m.id) })),
     );
 
-  uploadMedia = async (file: { fileName: string; type: string; size: number }, altText: string) => {
+  uploadMedia = async (file: File, altText: string) => {
     if (altText.trim() === '') throw new RepoError('invalid', 'Alt text is required.');
     const item = {
       id: newId('media'),
-      fileName: file.fileName,
+      fileName: file.name,
       altText: altText.trim(),
       width: 1600,
       height: 1200,
       bytes: file.size,
     };
     this.state.media.push(item);
-    this.log('Images', { summary: `Added image ${file.fileName}` });
+    this.log('Images', { summary: `Added image ${file.name}` });
     this.touch();
     return { ...item, usedOn: [] };
   };

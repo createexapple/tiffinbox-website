@@ -283,6 +283,12 @@ describe('dishes, add-ons and FAQ (FR-17..19)', () => {
 
 describe('site settings (FR-20, FR-27)', () => {
   const ok: SettingsInput = {
+    businessName: 'Tiffin Box',
+    tagline: 'Ghar ka khana',
+    areaServed: 'Johar Town, Lahore',
+    deliveryBoundaryText: '',
+    legalNameAndAddress: '',
+    paymentMethods: 'JazzCash, Easypaisa, bank transfer',
     whatsappNumber: '920000000000',
     instagramHandle: 'tiffinbox.lhr',
     orderHours: 'Sample hours',

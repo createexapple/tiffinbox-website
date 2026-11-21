@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { MEAL_LABEL } from '@/admin/format';
+import { RepoError } from '@/admin/repository';
 import type { MealKey, OpsSettings, SiteSettingsDraft } from '@/admin/types';
 import {
   MEALS,
@@ -44,6 +45,12 @@ export function SettingsScreen() {
 
 function toInput(site: SiteSettingsDraft, ops: OpsSettings): SettingsInput {
   return {
+    businessName: site.businessName,
+    tagline: site.tagline,
+    areaServed: site.areaServed,
+    deliveryBoundaryText: site.deliveryBoundaryText,
+    legalNameAndAddress: site.legalNameAndAddress,
+    paymentMethods: site.paymentMethods.join(', '),
     whatsappNumber: site.whatsappNumber,
     instagramHandle: site.instagramHandle,
     orderHours: site.orderHours,
@@ -97,6 +104,12 @@ function SettingsForm({ site, ops }: { site: SiteSettingsDraft; ops: OpsSettings
   }
 
   const labels: Record<string, { id: string; label: string }> = {
+    businessName: { id: 's-name', label: 'Business name' },
+    tagline: { id: 's-tagline', label: 'Tagline' },
+    areaServed: { id: 's-served', label: 'Area served' },
+    deliveryBoundaryText: { id: 's-boundary', label: 'Delivery boundary' },
+    legalNameAndAddress: { id: 's-legal', label: 'Legal name and address' },
+    paymentMethods: { id: 's-pay', label: 'Payment methods' },
     whatsappNumber: { id: 's-wa', label: 'WhatsApp number' },
     instagramHandle: { id: 's-ig', label: 'Instagram handle' },
     orderHours: { id: 's-hours', label: 'Order hours' },
@@ -117,6 +130,66 @@ function SettingsForm({ site, ops }: { site: SiteSettingsDraft; ops: OpsSettings
   return (
     <form noValidate onSubmit={onSubmit}>
       <ErrorSummary errors={errors} labels={labels} serverError={serverError} />
+
+      <section className="panel" aria-labelledby="set-business">
+        <h2 id="set-business">Business</h2>
+        <p className="small muted">
+          Shown in the header, footer, page titles and the Home page. Publishing is blocked while
+          the business name is empty or still a [bracketed placeholder].
+        </p>
+        <div className="form-grid c2">
+          <TextField
+            id="s-name"
+            label="Business name"
+            required
+            value={v.businessName}
+            onChange={(x) => set('businessName', x)}
+            error={errors.businessName}
+          />
+          <TextField
+            id="s-tagline"
+            label="Tagline"
+            value={v.tagline}
+            onChange={(x) => set('tagline', x)}
+            hint="One short line under the headline, for example the Roman Urdu tagline."
+            error={errors.tagline}
+          />
+          <TextField
+            id="s-served"
+            label="Area served (short)"
+            value={v.areaServed}
+            onChange={(x) => set('areaServed', x)}
+            hint="For example Johar Town, Lahore. Used in headings and the footer."
+            error={errors.areaServed}
+          />
+          <TextField
+            id="s-pay"
+            label="Payment methods"
+            value={v.paymentMethods}
+            onChange={(x) => set('paymentMethods', x)}
+            hint="Separate with commas, for example JazzCash, Easypaisa, bank transfer."
+            error={errors.paymentMethods}
+          />
+          <TextAreaField
+            id="s-boundary"
+            label="Delivery boundary text"
+            rows={3}
+            value={v.deliveryBoundaryText}
+            onChange={(x) => set('deliveryBoundaryText', x)}
+            hint="Exact streets or limits we deliver to (Q-11). Shown on the How it works page."
+            error={errors.deliveryBoundaryText}
+          />
+          <TextAreaField
+            id="s-legal"
+            label="Legal name and address"
+            rows={3}
+            value={v.legalNameAndAddress}
+            onChange={(x) => set('legalNameAndAddress', x)}
+            hint="Business legal name and address for the footer (Q-27)."
+            error={errors.legalNameAndAddress}
+          />
+        </div>
+      </section>
 
       <section className="panel" aria-labelledby="set-contact">
         <h2 id="set-contact">Contact</h2>
@@ -259,25 +332,43 @@ function SettingsForm({ site, ops }: { site: SiteSettingsDraft; ops: OpsSettings
 }
 
 /**
- * Password change (FR-13). MOCK: the fields are validated and cleared; nothing is stored, compared with a
- * secret or logged. Stage 3 sends them to Supabase Auth over the server action.
+ * Password change (FR-13). The three fields go to the server action, which checks them again, verifies the
+ * current password with Supabase Auth, and only then sets the new one. Nothing is stored or logged here and the
+ * fields are cleared after every attempt.
  */
 function PasswordPanel({ email }: { email: string }) {
+  const { repo } = useAdmin();
   const toast = useToast();
+  const [serverError, setServerError] = useState<string | null>(null);
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [repeat, setRepeat] = useState('');
   const [errors, setErrors] = useState<Partial<Record<PasswordField, string>>>({});
 
-  function onSubmit(event: FormEvent) {
+  async function onSubmit(event: FormEvent) {
     event.preventDefault();
+    setServerError(null);
     const found = validatePasswordChange({ current, next, repeat });
     setErrors(found);
     if (Object.keys(found).length > 0) return;
-    setCurrent('');
-    setNext('');
-    setRepeat('');
-    toast({ text: 'Password change checked. Mock: nothing was changed or stored.' });
+    try {
+      await repo.changePassword(current, next, repeat);
+      setCurrent('');
+      setNext('');
+      setRepeat('');
+      toast({ text: 'Your password was changed.' });
+    } catch (e) {
+      setCurrent('');
+      if (e instanceof RepoError && e.fields) {
+        const mapped: Partial<Record<PasswordField, string>> = {};
+        for (const key of ['current', 'next', 'repeat'] as const) {
+          const message = e.fields[key];
+          if (message) mapped[key] = message;
+        }
+        setErrors(mapped);
+      }
+      setServerError(e instanceof Error ? e.message : 'Please try again.');
+    }
   }
 
   return (
@@ -286,6 +377,7 @@ function PasswordPanel({ email }: { email: string }) {
       <p className="small muted">Signed in as {email}</p>
       <form noValidate onSubmit={onSubmit}>
         <ErrorSummary
+          serverError={serverError}
           errors={errors}
           labels={{
             current: { id: 'pw-cur', label: 'Current password' },

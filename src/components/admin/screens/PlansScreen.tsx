@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
-import { monthlyPriceCheck } from '@/admin/ledger';
 import type { PlanDraft, PricingRules } from '@/admin/types';
 import { parsePositiveRupees } from '@/admin/validation/common';
 import {
@@ -140,7 +139,6 @@ function PlansForm({ plans, rules }: { plans: PlanDraft[]; rules: PricingRules }
     .map((p) => parsePositiveRupees(values[p.id]?.unitPrice ?? ''))
     .filter((n): n is number => n !== null);
   const mealsFrom = mealPrices.length > 0 ? Math.min(...mealPrices) : null;
-  const saving = Number(ruleValues.monthlySavingPercent);
 
   return (
     <form noValidate onSubmit={onSubmit}>
@@ -272,8 +270,9 @@ function PlansForm({ plans, rules }: { plans: PlanDraft[]; rules: PricingRules }
           Monthly price check <span className="tag">Q-10 pending</span>
         </h3>
         <p className="small muted">
-          For you to verify before publishing, if the client confirms “4 weeks × weekly price −
-          saving”. Sample figures only; not shown to visitors.
+          Calculated by the system from the saved weekly price and monthly saving, for you to verify
+          before publishing, if the client confirms the rule (Q-10). It updates after you save the
+          draft.
         </p>
         <table className="rt admin-table">
           <thead>
@@ -283,7 +282,7 @@ function PlansForm({ plans, rules }: { plans: PlanDraft[]; rules: PricingRules }
                 Weekly
               </th>
               <th scope="col" className="num">
-                × 4 − saving
+                Monthly (calculated)
               </th>
             </tr>
           </thead>
@@ -297,9 +296,7 @@ function PlansForm({ plans, rules }: { plans: PlanDraft[]; rules: PricingRules }
                     {weekly === null ? 'not valid' : formatRs(weekly)}
                   </td>
                   <td data-label="Monthly check" className="num">
-                    {weekly === null || Number.isNaN(saving) || saving > 100
-                      ? 'not valid'
-                      : formatRs(monthlyPriceCheck(weekly, saving))}
+                    {plan.monthlyPrice == null ? 'not shown' : formatRs(plan.monthlyPrice)}
                   </td>
                 </tr>
               );

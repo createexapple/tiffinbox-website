@@ -182,6 +182,13 @@ export function validateFaq(
 // ---------- Settings (FR-20, FR-27) ----------
 
 export interface SettingsInput {
+  businessName: string;
+  tagline: string;
+  areaServed: string;
+  deliveryBoundaryText: string;
+  legalNameAndAddress: string;
+  /** Comma or new-line separated, for example "JazzCash, Easypaisa, bank transfer". */
+  paymentMethods: string;
   whatsappNumber: string;
   instagramHandle: string;
   orderHours: string;
@@ -196,6 +203,12 @@ export interface SettingsInput {
 
 /** Field keys for settings errors: top-level names plus "deliveryTimes.lunch" and "skipCutoffs.lunch". */
 export type SettingsField =
+  | 'businessName'
+  | 'tagline'
+  | 'areaServed'
+  | 'deliveryBoundaryText'
+  | 'legalNameAndAddress'
+  | 'paymentMethods'
   | 'whatsappNumber'
   | 'instagramHandle'
   | 'orderHours'
@@ -209,6 +222,16 @@ export type SettingsField =
 
 export const MEALS: readonly MealKey[] = ['breakfast', 'lunch', 'dinner'];
 
+export const PAYMENT_METHODS_MAX = 8;
+
+/** "JazzCash, Easypaisa\nbank transfer" becomes ["JazzCash", "Easypaisa", "bank transfer"] (empty items dropped). */
+export function parsePaymentMethods(text: string): string[] {
+  return text
+    .split(/[,\n]/)
+    .map((item) => item.trim())
+    .filter((item) => item !== '');
+}
+
 export function validateSettings(
   input: SettingsInput,
 ): Validation<
@@ -216,6 +239,31 @@ export function validateSettings(
   SettingsField
 > {
   const errors: FieldErrors<SettingsField> = {};
+
+  const nameError = checkText(input.businessName, 'the business name', { required: true, max: 80 });
+  if (nameError) errors.businessName = nameError;
+  const taglineError = checkText(input.tagline, 'the tagline', { max: 160 });
+  if (taglineError) errors.tagline = taglineError;
+  const areaServedError = checkText(input.areaServed, 'the area served', { max: 120 });
+  if (areaServedError) errors.areaServed = areaServedError;
+  const boundaryError = checkText(input.deliveryBoundaryText, 'the delivery boundary text', {
+    max: 300,
+  });
+  if (boundaryError) errors.deliveryBoundaryText = boundaryError;
+  const legalError = checkText(input.legalNameAndAddress, 'the legal name and address', {
+    max: 300,
+  });
+  if (legalError) errors.legalNameAndAddress = legalError;
+  const methods = parsePaymentMethods(input.paymentMethods);
+  if (methods.length > PAYMENT_METHODS_MAX) {
+    errors.paymentMethods = `List at most ${PAYMENT_METHODS_MAX} payment methods.`;
+  } else {
+    const bad = methods.find((m) => checkText(m, 'a payment method', { max: 40 }) !== null);
+    if (bad !== undefined) {
+      errors.paymentMethods =
+        checkText(bad, 'a payment method', { max: 40 }) ?? 'Check the payment methods.';
+    }
+  }
 
   const wa = input.whatsappNumber.trim();
   if (wa !== '' && !/^[1-9]\d{9,14}$/.test(wa)) {
@@ -256,6 +304,12 @@ export function validateSettings(
     ok: true,
     value: {
       site: {
+        businessName: input.businessName.trim(),
+        tagline: input.tagline.trim(),
+        areaServed: input.areaServed.trim(),
+        deliveryBoundaryText: input.deliveryBoundaryText.trim(),
+        legalNameAndAddress: input.legalNameAndAddress.trim(),
+        paymentMethods: methods,
         whatsappNumber: wa,
         instagramHandle: handle,
         orderHours: input.orderHours.trim(),

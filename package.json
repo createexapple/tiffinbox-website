@@ -2,7 +2,7 @@
   "name": "tiffinbox-website",
   "version": "0.1.0",
   "private": true,
-  "description": "Tiffin Box public website (Stage 2 frontend, mock content)",
+  "description": "Tiffin Box public website and admin dashboard (Stage 3: Supabase backend)",
   "engines": {
     "node": ">=22.12.0"
   },
@@ -15,12 +15,19 @@
     "format": "prettier --check .",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "db:test": "bash supabase/tests/run.sh"
+    "db:test": "bash supabase/tests/run.sh",
+    "test:e2e:staging": "node --env-file-if-exists=.env.local ./node_modules/@playwright/test/cli.js test -c playwright.staging.config.ts",
+    "test:staging": "node --env-file-if-exists=.env.local scripts/staging-integration.mjs",
+    "test:fallback": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/verify-offline-fallback.mjs"
   },
   "dependencies": {
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.119.2",
     "next": "16.4.6",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "server-only": "0.0.1",
+    "sharp": "0.35.5"
   },
   "devDependencies": {
     "@playwright/test": "1.65.1",

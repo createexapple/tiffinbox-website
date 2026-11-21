@@ -6,6 +6,11 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Pin the project root: a stray lockfile above this repo would otherwise confuse root detection.
   turbopack: { root: path.resolve(process.cwd()) },
+  experimental: {
+    // Photo uploads go through a server action (FR-21: 8 MB limit enforced again in the action).
+    // 8 MB file + multipart overhead. The action checks the session first, then type, size and content.
+    serverActions: { bodySizeLimit: '9mb' },
+  },
   async headers() {
     return [
       {

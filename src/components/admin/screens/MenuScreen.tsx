@@ -419,6 +419,17 @@ function WeekEditor({
         <Link className="btn btn-secondary" href="/admin/publish">
           Preview &amp; publish
         </Link>
+        {week ? (
+          // Plain link, not next/link: it turns draft mode on, so it must never be prefetched.
+          <a
+            className="btn btn-secondary"
+            href={`/admin/preview?to=${encodeURIComponent('/menu')}&week=${encodeURIComponent(week.id)}`}
+            target="_blank"
+            rel="noopener"
+          >
+            Preview this week<span className="sr-only"> on the website (new tab)</span>
+          </a>
+        ) : null}
       </div>
 
       <Dialog

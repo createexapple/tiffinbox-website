@@ -162,6 +162,23 @@ a:hover {
   color: inherit;
   font-weight: 700;
 }
+/* Admin draft preview (FR-22): visible on every page while draft mode is on. */
+.preview-banner {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  background: var(--accent-tint);
+  color: var(--on-accent-tint);
+  border-bottom: 3px solid var(--gold-500, #f2b441);
+  font-size: var(--fs-sm);
+  padding: var(--sp-2) var(--gutter);
+  text-align: center;
+  line-height: 1.4;
+}
+.preview-banner a {
+  color: inherit;
+  font-weight: 700;
+}
 .ph {
   display: flex;
   align-items: center;

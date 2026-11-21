@@ -1,0 +1,637 @@
+
+> tiffinbox-website@0.1.0 db:test
+> bash supabase/tests/run.sh
+
+== shim
+== migrations
+  apply 20261122000001_foundation.sql
+  apply 20261122000002_content_tables.sql
+  apply 20261122000003_operations_tables.sql
+  apply 20261122000004_audit.sql
+  apply 20261122000005_rls_and_grants.sql
+  apply 20261122000006_status_views.sql
+  apply 20261122000007_publishing.sql
+  apply 20261122000008_menu_functions.sql
+  apply 20261122000009_operations_functions.sql
+  apply 20261122000010_storage.sql
+  apply 20261122000011_lockdown.sql
+== test 01_rls.sql
+PASS: public schema has the 19 expected tables
+PASS: RLS is enabled on every public table
+PASS: anon has NO privilege of any kind on any table, view or sequence in public
+PASS: anon has no privilege on any sequence
+PASS: anon may execute exactly one function: get_public_content
+PASS: no RLS policy in public names anon or public
+PASS: every view in public is security_invoker (RLS of the caller applies)
+PASS: authenticated may execute only the caller-privilege app.* helpers, not the SECURITY DEFINER internals
+PASS: every function in public and app has a fixed search_path
+PASS: every SECURITY DEFINER function is owned by the table owner (so RLS bypass is intended and limited to that role)
+PASS: anon has no USAGE on schema app
+PASS: nobody can write audit_log (no grants)
+PASS: payments cannot be deleted (void instead)
+PASS: customers cannot be deleted (archive instead)
+PASS: subscriptions are created only by create_subscription()
+PASS: releases are written only by publish_content()
+PASS: menu weeks are written only by the menu functions
+PASS: void fields are not directly updatable
+PASS: fixture: every table has at least one row
+PASS: anon cannot SELECT admin_users [42501]
+PASS: anon cannot SELECT site_settings [42501]
+PASS: anon cannot SELECT pricing_rules [42501]
+PASS: anon cannot SELECT ops_settings [42501]
+PASS: anon cannot SELECT media [42501]
+PASS: anon cannot SELECT plans [42501]
+PASS: anon cannot SELECT dishes [42501]
+PASS: anon cannot SELECT addons [42501]
+PASS: anon cannot SELECT faq_entries [42501]
+PASS: anon cannot SELECT page_images [42501]
+PASS: anon cannot SELECT menu_weeks [42501]
+PASS: anon cannot SELECT menu_slots [42501]
+PASS: anon cannot SELECT content_releases [42501]
+PASS: anon cannot SELECT site_state [42501]
+PASS: anon cannot SELECT customers [42501]
+PASS: anon cannot SELECT subscriptions [42501]
+PASS: anon cannot SELECT subscription_periods [42501]
+PASS: anon cannot SELECT payments [42501]
+PASS: anon cannot SELECT audit_log [42501]
+PASS: anon cannot SELECT subscription_status [42501]
+PASS: anon cannot SELECT period_payment_status [42501]
+PASS: anon cannot SELECT customer_summary [42501]
+PASS: anon cannot SELECT menu_week_status [42501]
+PASS: anon cannot SELECT dashboard_overview [42501]
+PASS: anon cannot SELECT subscription_balance [42501]
+PASS: anon cannot SELECT change_history [42501]
+PASS: anon cannot INSERT plans
+PASS: anon cannot INSERT customers
+PASS: anon cannot UPDATE plans
+PASS: anon cannot DELETE plans
+PASS: anon cannot repoint the live release
+PASS: anon cannot execute publish_content
+PASS: anon cannot execute draft_status
+PASS: anon cannot execute get_draft_content
+PASS: anon cannot execute rollback_release
+PASS: anon cannot execute void_payment
+PASS: anon cannot execute anonymise_customer
+PASS: anon cannot reach the app schema
+PASS: anon CAN execute get_public_content
+PASS: get_public_content returns the published release to anon
+PASS: public content reports release version 1
+PASS: public content has exactly the documented top-level keys
+PASS: public content contains no customer, subscription, audit or draft data
+PASS: public content carries the 21 live menu slots
+PASS: anon can read objects of the public media bucket
+PASS: anon cannot see media-incoming objects
+PASS: anon cannot upload to media
+PASS: non-admin sees 0 rows in admin_users
+PASS: non-admin sees 0 rows in site_settings
+PASS: non-admin sees 0 rows in pricing_rules
+PASS: non-admin sees 0 rows in ops_settings
+PASS: non-admin sees 0 rows in media
+PASS: non-admin sees 0 rows in plans
+PASS: non-admin sees 0 rows in dishes
+PASS: non-admin sees 0 rows in addons
+PASS: non-admin sees 0 rows in faq_entries
+PASS: non-admin sees 0 rows in page_images
+PASS: non-admin sees 0 rows in menu_weeks
+PASS: non-admin sees 0 rows in menu_slots
+PASS: non-admin sees 0 rows in content_releases
+PASS: non-admin sees 0 rows in site_state
+PASS: non-admin sees 0 rows in customers
+PASS: non-admin sees 0 rows in subscriptions
+PASS: non-admin sees 0 rows in subscription_periods
+PASS: non-admin sees 0 rows in payments
+PASS: non-admin sees 0 rows in audit_log
+PASS: non-admin sees 0 rows in subscription_status
+PASS: non-admin sees 0 rows in period_payment_status
+PASS: non-admin sees 0 rows in customer_summary
+PASS: non-admin sees 0 rows in menu_week_status
+PASS: non-admin sees 0 rows in dashboard_overview
+PASS: non-admin sees 0 rows in subscription_balance
+PASS: non-admin sees 0 rows in change_history
+PASS: non-admin cannot INSERT plans
+PASS: non-admin cannot INSERT media
+PASS: non-admin cannot INSERT customers
+PASS: non-admin cannot INSERT payments (refused by the invoker-privilege trigger/RLS) [23514]
+PASS: non-admin cannot make themselves an admin
+PASS: non-admin UPDATE plans changes nothing [0 rows changed]
+PASS: non-admin UPDATE site_settings changes nothing [0 rows changed]
+PASS: non-admin UPDATE customers changes nothing [0 rows changed]
+PASS: non-admin UPDATE payments changes nothing [0 rows changed]
+PASS: non-admin DELETE plans changes nothing [0 rows changed]
+PASS: non-admin DELETE media changes nothing [0 rows changed]
+PASS: non-admin DELETE audit_log refused [refused]
+PASS: a signed-in non-admin can still read the published content
+PASS: non-admin: publish_content is forbidden
+PASS: non-admin: rollback_release is forbidden
+PASS: non-admin: get_draft_content is forbidden
+PASS: non-admin: draft_status is forbidden
+PASS: non-admin: save_menu_week is forbidden
+PASS: non-admin: copy_menu_week is forbidden
+PASS: non-admin: release_menu_week is forbidden
+PASS: non-admin: create_subscription is forbidden
+PASS: non-admin: void_payment is forbidden
+PASS: non-admin: anonymise_customer is forbidden
+PASS: non-admin cannot see media-incoming objects
+PASS: non-admin cannot upload to media
+PASS: non-admin cannot upload to media-incoming
+PASS: inactive admin sees 1 row (own, flagged inactive) in admin_users
+PASS: inactive admin sees 0 rows in site_settings
+PASS: inactive admin sees 0 rows in plans
+PASS: inactive admin sees 0 rows in media
+PASS: inactive admin sees 0 rows in customers
+PASS: inactive admin sees 0 rows in subscriptions
+PASS: inactive admin sees 0 rows in payments
+PASS: inactive admin sees 0 rows in audit_log
+PASS: inactive admin sees 0 rows in menu_weeks
+PASS: inactive admin sees 0 rows in content_releases
+PASS: inactive admin sees 0 rows in dashboard_overview
+PASS: inactive admin cannot INSERT plans
+PASS: inactive admin: publish_content is forbidden
+PASS: inactive admin: void_payment is forbidden
+PASS: admin A can read site_settings
+PASS: admin A can read pricing_rules
+PASS: admin A can read ops_settings
+PASS: admin A can read media
+PASS: admin A can read plans
+PASS: admin A can read dishes
+PASS: admin A can read addons
+PASS: admin A can read faq_entries
+PASS: admin A can read page_images
+PASS: admin A can read menu_weeks
+PASS: admin A can read menu_slots
+PASS: admin A can read content_releases
+PASS: admin A can read site_state
+PASS: admin A can read customers
+PASS: admin A can read subscriptions
+PASS: admin A can read subscription_periods
+PASS: admin A can read payments
+PASS: admin A can read audit_log
+PASS: admin A can read subscription_status
+PASS: admin A can read period_payment_status
+PASS: admin A can read customer_summary
+PASS: admin A can read menu_week_status
+PASS: admin A can read subscription_balance
+PASS: admin A can read change_history
+PASS: admin A reads only their own admin_users row
+PASS: admin A gets the dashboard overview row
+PASS: admin A sees own incoming upload
+PASS: admin can INSERT plans
+PASS: admin can UPDATE plans
+PASS: admin can DELETE plans
+PASS: admin can UPDATE site_settings
+PASS: admin can UPDATE pricing_rules
+PASS: admin can UPDATE ops_settings
+PASS: admin can INSERT dishes
+PASS: admin can INSERT addons
+PASS: admin can INSERT faq_entries
+PASS: admin can INSERT media
+PASS: admin can INSERT customers
+PASS: admin can UPDATE customers
+PASS: admin can INSERT payments
+PASS: admin can edit a payment (note)
+PASS: admin cannot DELETE payments
+PASS: admin cannot DELETE customers
+PASS: admin cannot DELETE audit_log
+PASS: admin cannot UPDATE audit_log
+PASS: admin cannot forge audit_log rows
+PASS: admin cannot void by direct UPDATE (void_payment only)
+PASS: admin cannot set anonymised_at directly
+PASS: admin cannot reassign a subscription to another customer
+PASS: admin cannot INSERT subscriptions directly
+PASS: admin cannot edit a release
+PASS: admin cannot repoint site_state directly
+PASS: admin cannot set a go-live time directly
+PASS: admin cannot write menu slots directly
+PASS: admin cannot edit admin_users through the API
+PASS: admin cannot add admins through the API (v1: Supabase dashboard)
+PASS: admin can write to media
+PASS: admin can write own incoming upload
+PASS: admin cannot write an incoming upload owned by someone else
+PASS: staff admin B reads only own admin_users row
+PASS: admin B cannot see admin A incoming uploads
+PASS: staff admin B can INSERT plans (v1: all admins equal, A-06)
+PASS: staff admin B can call draft_status
+== test 02_status_views.sql
+PASS: Karachi date at 23:59:59 PKT is still the same day
+PASS: Karachi date at 00:00:00 PKT is the next day
+PASS: Karachi date crosses the year boundary
+PASS: a timestamp given in +05 keeps its Karachi date
+PASS: ends today: still active on its last day
+PASS: ended yesterday: expired
+PASS: starts tomorrow: upcoming
+PASS: starts today: active on its first day
+PASS: last day of a week: active
+PASS: day after the end date: expired
+PASS: manual pause inside the dates: paused
+PASS: ended a week ago: expired
+PASS: paused beats expired: a paused subscription past its end date stays paused
+PASS: paused beats upcoming: a paused subscription with a future start is paused
+PASS: un-pausing a past subscription shows expired
+PASS: un-pausing a future subscription shows upcoming
+PASS: renewal due: 0 days left
+PASS: days_to_end counts calendar days
+PASS: renewal due: 6 days left (window 7)
+PASS: renewal due: exactly 7 days left is inside the window (boundary)
+PASS: not renewal due: 8 days left is outside the window (boundary)
+PASS: not renewal due: 14 days left
+PASS: a paused subscription is never flagged renewal due
+PASS: an upcoming subscription is never flagged renewal due
+PASS: an expired subscription is not flagged renewal due
+PASS: window 0: due only on the last day
+PASS: window 0: one day before the end is not flagged
+PASS: window 0: last day is flagged
+PASS: window 14: 14 days left is flagged
+PASS: due date itself: still unpaid, not overdue
+PASS: before the due date: unpaid
+PASS: day after the due date: overdue (grace 0)
+PASS: period starting tomorrow, due today: unpaid
+PASS: period started, due yesterday: overdue
+PASS: fully paid stays paid after the due date
+PASS: a paused subscription that is fully paid is paid
+PASS: an expired subscription with an unpaid period is overdue
+PASS: part payment past the due date: overdue
+PASS: part payment leaves a balance of the unpaid remainder
+PASS: paid amount shows what was received
+PASS: grace 2: due date + 1 day is still unpaid
+PASS: grace 2: due date + 2 days is still unpaid (boundary)
+PASS: grace 2: due date + 3 days is overdue (boundary)
+PASS: one rupee short of the amount due is not paid
+PASS: one rupee short leaves a balance of 1
+PASS: exactly the amount due is paid
+PASS: public view subscription_status lists all subscriptions
+PASS: the view equals the function evaluated at today in Asia/Karachi
+PASS: customer payment status: overdue
+PASS: customer payment status: unpaid
+PASS: customer payment status: paid
+PASS: customer current status: paused
+PASS: worst of (paid, unpaid) is unpaid
+PASS: worst of (paid, overdue) is overdue
+PASS: customer lists all subscription statuses present
+PASS: current subscription prefers active over upcoming
+PASS: a customer without periods has no payment status
+PASS: a customer without subscriptions has no current subscription
+PASS: overview: active subscribers = distinct non-archived customers with an active subscription (C1, C2, C5; archived C7 excluded)
+PASS: overview: office head-count of active office customers (12 + 10)
+PASS: overview: one unpaid period
+PASS: overview: unpaid total is the sum of balances
+PASS: overview: three overdue periods
+PASS: overview: overdue total (4200 + 6540 + 4200)
+PASS: overview: renewal due counts subscriptions (C1, C2, C5)
+PASS: overview echoes the renewal window
+PASS: overview: non-archived customers
+PASS: overview unpaid count equals the dues list count (FR-30)
+PASS: overview overdue total equals the dues list total (FR-30)
+PASS: overview renewal count equals the expiring list count (FR-30)
+PASS: a day later: C1 expired, C3 became active
+PASS: a day later: the period due yesterday is now overdue
+PASS: a day later: nothing is merely unpaid any more
+PASS: overview returns no row without an admin identity
+PASS: empty state: all counts are zero
+== test 03_payments.sql
+PASS: no payment: period 1 overdue on 1 Dec
+PASS: no payment: period 2 overdue on 1 Dec (due 28 Nov)
+PASS: no payment: period 3 not yet due
+PASS: part payment 400 lands on the oldest period
+PASS: oldest period shows the remaining balance 600
+PASS: later periods get nothing until the oldest is covered
+PASS: 400 + 1100 = 1500: oldest period fully paid
+PASS: oldest period is paid
+PASS: the remaining 500 spills into the second period
+PASS: second period balance 500
+PASS: second period is part paid and past due: overdue
+PASS: third period untouched
+PASS: one big payment pays period 2 ...
+PASS: ... and fully covers period 3 (3000 total)
+PASS: all three periods paid
+PASS: subscription balance is 0 when fully paid
+PASS: overpayment of 250 is reported as credit
+PASS: overpayment is not added to any period (paid is capped at the amount due)
+PASS: admin can void a payment with a reason
+PASS: a voided payment row is kept
+PASS: void reason is stored
+PASS: voided payment keeps its original amount
+PASS: after voiding 1500: 1750 remain, period 2 is back to 750 paid
+PASS: after voiding: period 3 is unpaid again (due 29 Dec, not yet overdue on 1 Dec)
+PASS: credit disappears when the overpayment is voided
+PASS: subscription balance after void: 3000 due - 1750 paid
+PASS: a payment cannot be voided twice
+PASS: void requires a reason
+PASS: voiding an unknown payment is a 404
+PASS: a voided payment cannot be edited by an admin (RLS hides it from UPDATE) [0 rows changed]
+PASS: a voided payment cannot be edited by anyone (trigger)
+PASS: payments of another subscription do not pay this period
+PASS: a period with 0 due (waived) is paid
+PASS: payment amount 0 is rejected
+PASS: negative payment amount is rejected
+PASS: a fractional amount ("10.5") is rejected: whole PKR only
+PASS: an unknown payment method is rejected
+PASS: covers_to before covers_from is rejected
+PASS: a payment cannot name a subscription of another customer
+PASS: a payment cannot be created already voided without a reason
+PASS: two periods of one subscription cannot start on the same day
+PASS: a negative amount due is rejected
+PASS: a subscription ending before it starts is rejected
+PASS: an unknown term is rejected
+PASS: a negative amount per period is rejected
+PASS: local 03.. phone is stored normalised as +92
+PASS: a duplicate phone is allowed (warning only, FR-24); +92 with spaces/dashes is normalised
+PASS: an invalid phone is rejected
+PASS: a landline-looking number is rejected
+PASS: a customer needs a phone number
+PASS: a blank name is rejected
+PASS: markup in a name is rejected (plain text only)
+PASS: an office needs organisation, contact person and member count
+PASS: office member count must be at least 1
+PASS: a complete office customer is accepted
+PASS: only offices have a member count
+PASS: an unknown customer type is rejected
+PASS: no new payment can be recorded for an archived customer
+PASS: create_subscription returns the computed status
+PASS: a new subscription starts unpaid (due the day before it starts)
+PASS: a new subscription owes its amount per period
+PASS: exactly one period is created with the subscription
+PASS: due date defaults to the day before the start (A-22)
+PASS: period amount due = amount per period
+PASS: the plan name is copied at creation
+PASS: renewal with a custom due date and renewed_from_id
+PASS: a given due date is used
+PASS: renewed_from_id is stored
+PASS: end date before start date -> PT400, nothing created
+PASS: unknown plan -> PT400
+PASS: unknown customer -> PT404
+PASS: negative amount -> PT400
+PASS: renewed_from must belong to the same customer
+PASS: no new subscription for an archived customer
+PASS: failed creations left no partial rows (2 created above + 1 earlier)
+PASS: A-20: a plan price change does not change an existing subscription amount
+PASS: A-20: a plan rename does not rewrite subscription history
+PASS: status views show the snapshot name
+PASS: editing a single-period subscription keeps its period in step (due date moves with the default)
+PASS: a due date set by hand is not overwritten
+PASS: a subscription with several periods does not rewrite them
+PASS: at most one plan is "most popular"
+PASS: the newest "most popular" flag wins
+== test 04_publish_rollback.sql
+PASS: before the first publish, get_public_content returns null (the app falls back to its last-good copy)
+PASS: nothing published yet: draft_status reports unpublished changes
+PASS: publish is blocked (PT400) while placeholders and an unpriced plan remain
+PASS: the error names the WhatsApp number field
+PASS: the error names the placeholder order hours
+PASS: the error names the plan without a price (Q-08)
+PASS: draft_status lists the three blocking problems
+PASS: a failed publish wrote no release
+PASS: a failed publish left site_state alone
+PASS: a failed publish wrote no audit entry
+PASS: WhatsApp number with + and spaces is rejected (digits only, FR-20)
+PASS: the table itself rejects a delivery time that is not HH:mm
+PASS: a delivery time left empty blocks publish
+PASS: a note longer than 200 characters is rejected
+PASS: first publish creates version 1
+PASS: site_state points at version 1
+PASS: the publisher is recorded
+PASS: the note is recorded
+PASS: publish wrote one audit entry
+PASS: visitors now see version 1
+PASS: the published plan price is the draft price at publish time
+PASS: only active plans are published
+PASS: settings are published
+PASS: monthly price derived as 4 x 4200 x 0.95 = 15960 when no override is stored
+PASS: a stored monthly price overrides the derived one
+PASS: calendar_month rule: 4200 x 30/7 x 0.95 = 17100
+PASS: right after publishing there are no unpublished changes
+PASS: no changed areas right after publishing
+PASS: editing a plan makes the indicator turn on
+PASS: changed areas name only what changed
+PASS: preview (get_draft_content) shows the draft price
+PASS: preview is marked as draft
+PASS: visitors still see the previous price until publish
+PASS: draft_status reports the live version
+PASS: second publish creates version 2
+PASS: visitors see the new price after publish
+PASS: no pending changes after the second publish
+PASS: the stored checksum matches the payload
+PASS: rollback to version 1 succeeds
+PASS: visitors are back on version 1
+PASS: the old price is live again
+PASS: rollback does not touch the draft tables
+PASS: after rollback the draft differs from the live release
+PASS: draft_status reports version 1 as live
+PASS: rollback to an unknown version is a 404
+PASS: rolling forward to version 2 works the same way
+PASS: rollback creates no new release
+PASS: each rollback is audited
+PASS: the rollback audit entry records from -> to
+PASS: a release cannot be edited, even by the owner role
+PASS: a release cannot be deleted
+PASS: a failure after the release row is written aborts the publish
+PASS: ATOMIC: the release row written before the failure was rolled back
+PASS: ATOMIC: the live site is still on the previous release
+PASS: ATOMIC: no audit entry for the failed publish
+PASS: sanity
+PASS: a failure while auditing aborts the rollback
+PASS: ATOMIC: the rollback did not take effect
+PASS: publish v3 with hidden items present
+PASS: hidden dishes are not published
+PASS: hidden add-ons are not published
+PASS: hidden FAQ entries are not published
+PASS: a dish carries its photo with alt text
+PASS: page images are published by slot
+PASS: an image used by a draft dish cannot be deleted (FK restrict)
+PASS: an image that is part of the live release cannot be deleted
+PASS: alt text is required for every image (FR-21)
+== test 05_menu_golive.sql
+PASS: before any go-live time there is no live menu (menu is null; the page uses its fallback)
+PASS: at A's go-live instant A is live (boundary: go_live <= now)
+PASS: one second before B's go-live A is still live
+PASS: at B's go-live instant B becomes live with no job having run
+PASS: at C's go-live instant C becomes live
+PASS: long after, the latest released week stays live (never an empty menu)
+PASS: before its go-live a released week is scheduled
+PASS: A is published during its week
+PASS: B is scheduled while A is live
+PASS: C is scheduled while A is live
+PASS: a week with no go-live time is a draft
+PASS: once B is live, A is past
+PASS: once B is live, B is published
+PASS: C is still scheduled
+PASS: a draft never goes live by itself
+PASS: exactly one week is published at any instant
+PASS: the same instant in UTC and in +05 resolves the same week
+PASS: B is live on Sunday evening before its Monday start: not a stale menu
+PASS: mid-week: current
+PASS: C on its last second: still the current week
+PASS: the next Monday with no new menu: stale, page shows "last updated" (FR-06)
+PASS: the stale menu still carries its week start
+PASS: the live menu has 21 slots
+PASS: slots are ordered Monday breakfast first
+PASS: slots end with Sunday dinner
+PASS: internal media ids are not exposed in the public menu
+PASS: equal go-live times: the most recently set week wins
+PASS: no published week before the first go-live
+PASS: the notifier never lists a week whose go-live is in the future
+PASS: mark_go_live_notified stamps the week
+PASS: a newly saved week is a draft
+PASS: save_menu_week stored 21 slots
+PASS: a draft never appears to visitors
+PASS: a week must start on a Monday
+PASS: a week needs exactly 21 slots
+PASS: 22 slots rejected
+PASS: day_of_week 8 rejected
+PASS: markup in dish text is rejected with a clear message
+PASS: over-long dish text is rejected
+PASS: rejected saves created no week
+PASS: a draft with an empty slot can be saved
+PASS: an empty slot blocks release and is named
+PASS: the empty slot marked not served is saved
+PASS: with the slot marked not served the week can be scheduled
+PASS: cancel_schedule turns it back into a draft
+PASS: publish_now makes the week published
+PASS: visitors see the published week
+PASS: and its slots
+PASS: one published week
+PASS: copy_menu_week creates a draft
+PASS: the copy has all 21 slots pre-filled
+PASS: copied text matches the source
+PASS: cannot copy onto an existing week
+PASS: the copy target must be a Monday
+PASS: unknown source week is a 404
+PASS: copying leaves the live menu untouched
+PASS: edit the copy as a draft
+PASS: a go-live time in the past is rejected for schedule
+PASS: schedule needs a go-live time
+PASS: unknown mode rejected
+PASS: unknown week is a 404
+PASS: schedule sets status scheduled
+PASS: a scheduled week does not change the live menu
+PASS: the live week stays published
+PASS: draft_status reports the scheduled menu
+PASS: the snapshot holds the scheduled text
+PASS: editing a scheduled week keeps working copy and snapshot together
+PASS: the scheduled snapshot followed the edit
+PASS: and the live menu is still untouched
+PASS: a scheduled week can be re-scheduled
+PASS: editing the live week marks it as differing from what is live
+PASS: visitors still see the old live text
+PASS: preview shows the working text
+PASS: releasing again brings the snapshot up to date
+PASS: visitors now see the edit
+PASS: a live week cannot be "cancelled"
+PASS: a released week cannot be re-scheduled (use publish_now)
+PASS: cancel_schedule on a scheduled week -> draft
+PASS: cancelling clears the snapshot and the go-live time
+PASS: and the live menu was untouched throughout
+PASS: a draft cannot be cancelled
+PASS: menu saves are audited (one entry per save that changed something)
+PASS: releases, schedules and cancels are audited
+PASS: copy is audited
+PASS: saving one edited slot logs exactly that one slot
+== test 06_audit.sql
+PASS: creating a customer writes one audit row
+PASS: the audit row carries the admin's display name
+PASS: and the admin's user id
+PASS: and the record id
+PASS: and the customer it is about
+PASS: the new row is stored (normalised phone)
+PASS: an insert has no old values
+PASS: a different admin is recorded as the actor
+PASS: update: old value kept
+PASS: update: new value kept
+PASS: update: whole rows are stored for operations tables, so earlier values stay readable
+PASS: content update: only the changed column is logged (old)
+PASS: content update: only the changed column is logged (new)
+PASS: a no-op update writes no audit row
+PASS: audit row exists for site_settings
+PASS: audit row exists for pricing_rules
+PASS: audit row exists for ops_settings
+PASS: audit row exists for dishes
+PASS: audit row exists for addons
+PASS: audit row exists for faq_entries
+PASS: audit row exists for media
+PASS: audit row exists for page_images
+PASS: page_images audit uses slot_key as the record id
+PASS: creating a subscription is audited
+PASS: creating its period is audited
+PASS: recording a payment is audited
+PASS: an edit and a void are each audited
+PASS: FR-23: the edited payment's previous amount stays in history
+PASS: and the new amount
+PASS: the void and its reason are recorded
+PASS: the voided payment's values are still in history
+PASS: every operations audit row is linked to its customer
+PASS: change_history maps table names to the screen's record types
+PASS: a change with no signed-in user is labelled "system"
+PASS: audit_log cannot be updated, even by the owner role
+PASS: audit_log cannot be deleted, even by the owner role
+PASS: audit values cannot be rewritten
+PASS: an admin cannot update audit_log
+PASS: an admin cannot delete audit_log
+PASS: before anonymising, the customer's address is present in history
+PASS: admin can anonymise a customer
+PASS: name replaced
+PASS: phone removed
+PASS: address and notes removed
+PASS: the customer is archived and marked anonymised
+PASS: the payment row is kept for the books
+PASS: with its amount
+PASS: free-text on the payment is removed (void reason replaced by a marker, keeping the void constraint)
+PASS: the voided payment is still voided
+PASS: subscription notes removed
+PASS: REDACTION: no personal value of that customer remains anywhere in the audit log
+PASS: the history rows themselves remain (only personal values were removed)
+PASS: amounts in history are kept for the books
+PASS: anonymisation itself is audited
+PASS: an anonymised customer cannot be edited again
+PASS: the redaction switch is off again: audit_log is append-only once more
+PASS: the redaction flag is reset after use
+PASS: anonymising twice is harmless
+PASS: anonymising an unknown customer is a 404
+== test 07_seeds.sql
+PASS: reference seed: 4 plans
+PASS: reference seed: 6 custom dishes
+PASS: reference seed: 6 add-ons
+PASS: reference seed: 7 FAQ entries
+PASS: reference seed: a 21-slot sample menu week
+PASS: reference seed: the sample week is a draft (not released)
+PASS: reference seed: no customers, no personal data
+PASS: reference seed: nothing is published
+PASS: reference seed: Student weekly price 8,050 (= 575 x 14)
+PASS: reference seed: Student per-meal price left unresolved (Q-08)
+PASS: reference seed alone cannot be published (placeholders + unresolved Student price), as FR-10 / FR-07 require
+PASS: the Student plan is named in the publish error
+PASS: the WhatsApp placeholder is named in the publish error
+PASS: reference seed is idempotent (plans)
+PASS: reference seed is idempotent (faq)
+PASS: reference seed is idempotent (slots)
+PASS: synthetic seed: 8 customers
+PASS: synthetic seed: every customer name is obviously synthetic
+PASS: synthetic seed: every phone is 0300-000000x
+PASS: synthetic seed: 8 subscriptions
+PASS: synthetic seed: one period each
+PASS: synthetic seed: 4 payments
+PASS: synthetic seed: release 1 published (publishing is possible once placeholders are filled)
+PASS: synthetic seed: visitors see release 1
+PASS: synthetic seed: release 1 has the Student price 550
+PASS: synthetic seed: drafts are ahead of the release (Student 575, FAQ), so the indicator shows
+PASS: synthetic seed: pending areas are Plans and FAQ (as in the Stage 2 sample)
+PASS: Stage 2 parity: 4 active subscribers
+PASS: Stage 2 parity: 22 office members
+PASS: Stage 2 parity: 2 unpaid, Rs 12,250
+PASS: Stage 2 parity: 3 overdue, Rs 21,240
+PASS: Stage 2 parity: 3 renewals due
+PASS: Stage 2 parity: 8 customers
+PASS: sample Sunday 19:00: the 23 Nov week has gone live (released 22 Nov 18:00)
+PASS: sample Sunday 19:00: the 30 Nov week is the scheduled one
+PASS: sample Sunday 12:00: nothing is live yet (the 23 Nov week goes live at 18:00)
+PASS: seed: the scheduled week's snapshot equals its working copy
+PASS: sample: the live week has one pending edit (Friday dinner), like the Stage 2 sample
+== rollback cycle
+PASS: after all rollbacks no table, view, sequence or function remains in public or app
+PASS: after re-applying, all 19 tables exist with RLS enabled
+PASS: after re-applying, anon may execute only get_public_content
+== seed guard (synthetic seed must refuse a database that holds non-synthetic customers)
+PASS: seed/02 refuses to run when a non-synthetic customer exists
+==============================
+assertions passed: 606
+assertions failed: 0
+throwaway database dropped
+RESULT: OK

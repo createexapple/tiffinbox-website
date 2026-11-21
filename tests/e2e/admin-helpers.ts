@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
-/** Mock sign-in (Stage 2): any well-formed email and a non-empty password reach the dashboard. */
+/** Test-mode sign-in (TIFFINBOX_TEST_MOCK_BACKEND=1): any well-formed email and a non-empty password reach the dashboard. */
 export async function mockLogin(page: Page) {
   await page.goto('/admin/login');
   await page.getByLabel('Email').fill('staff.sample@example.test');
