@@ -24,3 +24,6 @@ coverage/
 /playwright-report/
 /test-results/
 /blob-report/
+
+# Supabase CLI local state
+supabase/.temp/
