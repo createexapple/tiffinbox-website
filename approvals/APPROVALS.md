@@ -4,4 +4,4 @@ A row counts only if `scripts/verify-approval.sh <repo> <pr> <sha>` returns PASS
 
 | # | Date | Stage | Tag | Commit SHA | Milestone PR | CEO review URL | verify-approval.sh result | Recorded by |
 |---|---|---|---|---|---|---|---|---|
-| 1 | 2026-11-21 | 0 | stage0-v1 | PR head at review | milestone PR develop → main (to be opened after PR #1 merges) | — | PENDING (not yet reviewed) | Claude |
+| 1 | 2026-11-21 | 0 | stage0-v1 | PR head at review | https://github.com/createexapple/tiffinbox-website/pull/2 | — | FAIL #2: no decisive review by aliSabirDogar (run 2026-11-21, twice; PR was merged by aliSabirDogar without a review) | Claude |
