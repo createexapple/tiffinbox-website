@@ -1,37 +1,37 @@
 # Traceability
-Stage 0 state (2026-11-21): requirements only. Nothing is designed, built or tested. API / Tests / Implemented / Tested / CEO accepted columns are intentionally empty. Priorities and sources: see `docs/PRD.md` section 4.
+Stage 0 state (2026-11-21): requirements only. Nothing is designed, built or tested. API / Tests / Implemented / Tested / CEO accepted columns are intentionally empty. Priorities and sources: see `docs/PRD.md` section 4. Stage 2 update (2026-11-22; admin FR-13..FR-30 added after T2.4/T2.5, mock data only, Chromium only, not verified by a human): FR-01..FR-12 rows filled only where a test exists (public site, mock content, Chromium only, unit evidence in `docs/test-results/stage2/unit.txt`). Not verified by a human; CEO accepted column untouched.
 
 | FR | Screens | API endpoints | Tests | Implemented | Tested (evidence) | CEO accepted |
 |---|---|---|---|---|---|---|
-| FR-01 Logo top-left + navigation | S-01..S-07 | | | | | |
-| FR-02 Persistent WhatsApp button | S-01..S-07 | | | | | |
-| FR-03 End-of-page green Order on WhatsApp button | S-01..S-07 | | | | | |
-| FR-04 Instagram link on every page | S-01..S-07 | | | | | |
-| FR-05 Home page content | S-01 | | | | | |
-| FR-06 Menu page (this week's menu) | S-02 | | | | | |
-| FR-07 Plans & Pricing page | S-03 | | | | | |
-| FR-08 Customize page (dishes + add-ons) | S-04 | | | | | |
-| FR-09 How it works page | S-05 | | | | | |
-| FR-10 About & Contact page | S-06 | | | | | |
-| FR-11 FAQ display | S-06 | | | | | |
-| FR-12 404 / error page | S-07 | | | | | |
-| FR-13 Admin login / logout / password | A-01, A-02, A-08 | | | | | |
-| FR-14 Edit this week's menu | A-03 | | | | | |
-| FR-15 Draft and schedule next week's menu | A-03, A-02 | | | | | |
-| FR-16 Plans, prices and pricing rules | A-04 | | | | | |
-| FR-17 Custom dishes | A-05 | | | | | |
-| FR-18 Add-ons | A-06 | | | | | |
-| FR-19 FAQ management | A-07 | | | | | |
-| FR-20 Site settings | A-08 | | | | | |
-| FR-21 Image upload / media | A-09, A-03, A-05 | | | | | |
-| FR-22 Preview and publish | A-10, A-02 | | | | | |
-| FR-23 Change history (Should) | A-11 | | | | | |
-| FR-24 Customer records (create/edit/archive) | A-12, A-13, A-14 | | | | | |
-| FR-25 Customer list, search, filter, detail | A-12, A-13 | | | | | |
-| FR-26 Subscriptions (create/edit/renew) | A-13, A-15 | | | | | |
-| FR-27 Subscription status and renewals due | A-12, A-13, A-15, A-08 | | | | | |
-| FR-28 Record payments manually | A-13, A-16, A-17 | | | | | |
-| FR-29 Payment status paid/unpaid/overdue and dues | A-12, A-13, A-16 | | | | | |
-| FR-30 Dashboard overview | A-02 | | | | | |
+| FR-01 Logo top-left + navigation | S-01..S-07 | | e2e `public-site.spec.ts`: one H1/landmarks, logo link, desktop + mobile nav (7 pages) | Yes, uncommitted on `stage2/frontend` (mock content) | e2e (chromium) docs/test-results/stage2/e2e.txt | |
+| FR-02 Persistent WhatsApp button | S-01..S-07 | | e2e: persistent WhatsApp button on every page, placeholder note, no broken wa.me; unit `whatsapp.test.ts` | Yes, uncommitted on `stage2/frontend` (mock content) | e2e + unit; real wa.me link untested (no number, Q-04) | |
+| FR-03 End-of-page green Order on WhatsApp button | S-01..S-07 | | e2e: Order on WhatsApp is last block above footer on every page; unit `whatsapp.test.ts` | Yes, uncommitted on `stage2/frontend` (mock content) | e2e + unit | |
+| FR-04 Instagram link on every page | S-01..S-07 | | e2e: Instagram link, new tab, rel noopener on every page | Yes, uncommitted on `stage2/frontend` (mock content) | e2e | |
+| FR-05 Home page content | S-01 | | e2e: Home headline, tagline, "Meals from Rs 300", 3 steps; unit `derive.test.ts`, `content.test.ts` | Yes, uncommitted on `stage2/frontend` (mock content) | e2e + unit | |
+| FR-06 Menu page (this week's menu) | S-02 | | e2e: week label, 7 day rows, Customize link; unit `derive.test.ts` (current-week rule) | Yes, uncommitted on `stage2/frontend` (mock content) | e2e + unit; no-current-menu alert not e2e-tested | |
+| FR-07 Plans & Pricing page | S-03 | | e2e: 4 plans, one most popular, weekly price, 5% saving, breakfast add-on | Yes, uncommitted on `stage2/frontend` (mock content) | e2e; Student price still unresolved (Q-08) | |
+| FR-08 Customize page (dishes + add-ons) | S-04 | | e2e: dishes + add-ons with prices | Yes, uncommitted on `stage2/frontend` (mock content) | e2e; empty-state not e2e-tested | |
+| FR-09 How it works page | S-05 | | e2e: delivery and skip table from settings | Yes, uncommitted on `stage2/frontend` (mock content) | e2e | |
+| FR-10 About & Contact page | S-06 | | e2e: placeholders shown, contact list; FAQ present | Yes, uncommitted on `stage2/frontend` (mock content) | e2e | |
+| FR-11 FAQ display | S-06 | | e2e: FAQ toggles by mouse and keyboard, 44px summary | Yes, uncommitted on `stage2/frontend` (mock content) | e2e | |
+| FR-12 404 / error page | S-07 | | e2e: unknown URL returns 404 with H1 and Home link | Yes, uncommitted on `stage2/frontend` (mock content) | e2e; error fallback (data failure) untested | |
+| FR-13 Admin login / logout / password | A-01, A-02, A-08 | | e2e `admin.spec.ts`/`admin-states.spec.ts`: mock login to dashboard, field errors, error/throttled/expired states; unit `admin-validation.test.ts` (login, password change) | Yes, uncommitted on `stage2/frontend` (mock data, nothing saved) | e2e + unit. MOCK auth only: no real login, session expiry, throttling or authz (Stage 3) (docs/test-results/stage2/e2e.txt, unit.txt) | |
+| FR-14 Edit this week's menu | A-03 | | e2e `admin.spec.ts`/`admin-states.spec.ts`: live-week edit shows as unpublished change; over-long/markup refused; unit `admin-validation.test.ts`, `admin-mock-repository.test.ts` | Yes, uncommitted on `stage2/frontend` (mock data, nothing saved) | e2e + unit; 'see the change on preview' not testable until Stage 3 draft mode (docs/test-results/stage2/e2e.txt, unit.txt) | |
+| FR-15 Draft and schedule next week's menu | A-03, A-02 | | e2e `admin.spec.ts`/`admin-states.spec.ts`: empty next week, copy last week, schedule, cancel; unit `admin-mock-repository.test.ts`, `admin-status.test.ts` (week status) | Yes, uncommitted on `stage2/frontend` (mock data, nothing saved) | e2e + unit; automatic go-live at the set time not tested (needs Stage 3 SQL rule) (docs/test-results/stage2/e2e.txt, unit.txt) | |
+| FR-16 Plans, prices and pricing rules | A-04 | | e2e `admin.spec.ts`/`admin-states.spec.ts`: range rejected then saved; unit `admin-validation.test.ts`, `admin-ledger.test.ts` (monthly check) | Yes, uncommitted on `stage2/frontend` (mock data, nothing saved) | e2e + unit; price kept on existing subscriptions covered only by design (amount copied at creation) (docs/test-results/stage2/e2e.txt, unit.txt) | |
+| FR-17 Custom dishes | A-05 | | e2e `admin.spec.ts`/`admin-states.spec.ts`: add form validation, delete confirm, reorder; unit `admin-validation.test.ts` | Yes, uncommitted on `stage2/frontend` (mock data, nothing saved) | e2e (partial: add/edit save path unit-tested only) + unit (docs/test-results/stage2/e2e.txt, unit.txt) | |
+| FR-18 Add-ons | A-06 | | unit `admin-validation.test.ts`; shares the list manager exercised in the dishes e2e | Yes, uncommitted on `stage2/frontend` (mock data, nothing saved) | unit only; no add-ons e2e (docs/test-results/stage2/e2e.txt, unit.txt) | |
+| FR-19 FAQ management | A-07 | | unit `admin-validation.test.ts`, `admin-mock-repository.test.ts` (reorder); shares the list manager exercised in the dishes e2e | Yes, uncommitted on `stage2/frontend` (mock data, nothing saved) | unit only; no FAQ e2e (docs/test-results/stage2/e2e.txt, unit.txt) | |
+| FR-20 Site settings | A-08 | | e2e `admin.spec.ts`/`admin-states.spec.ts`: settings saved as draft; unit `admin-validation.test.ts` | Yes, uncommitted on `stage2/frontend` (mock data, nothing saved) | e2e + unit; 'published value shows on every page' not testable until Stage 3 (docs/test-results/stage2/e2e.txt, unit.txt) | |
+| FR-21 Image upload / media | A-09, A-03, A-05 | | e2e `admin.spec.ts`/`admin-states.spec.ts`: unsupported/oversized rejected, upload progress, in-use warning | Yes, uncommitted on `stage2/frontend` (mock data, nothing saved) | e2e; files are checked but never stored (mock) (docs/test-results/stage2/e2e.txt, unit.txt) | |
+| FR-22 Preview and publish | A-10, A-02 | | e2e `admin.spec.ts`/`admin-states.spec.ts`: blocked, publish, publishing state, success, rollback, failure; unit `admin-mock-repository.test.ts` | Yes, uncommitted on `stage2/frontend` (mock data, nothing saved) | e2e + unit; preview shows draft content only at Stage 3 (docs/test-results/stage2/e2e.txt, unit.txt) | |
+| FR-23 Change history (Should) | A-11 | | e2e `admin.spec.ts`/`admin-states.spec.ts`: history filter, empty filter, payment originals kept; unit `admin-mock-repository.test.ts` | Yes, uncommitted on `stage2/frontend` (mock data, nothing saved) | e2e + unit; log is an in-memory mock, not DB triggers (docs/test-results/stage2/e2e.txt, unit.txt) | |
+| FR-24 Customer records (create/edit/archive) | A-12, A-13, A-14 | | e2e `admin.spec.ts`/`admin-states.spec.ts`: add customer appears in list, duplicate phone warning, office fields, archive confirm; unit `admin-validation.test.ts`, `admin-rules.test.ts` | Yes, uncommitted on `stage2/frontend` (mock data, nothing saved) | e2e + unit; 'delete personal data' not built (out of scope) (docs/test-results/stage2/e2e.txt, unit.txt) | |
+| FR-25 Customer list, search, filter, detail | A-12, A-13 | | e2e `admin.spec.ts`/`admin-states.spec.ts`: search/filters never in URL; unit `admin-mock-repository.test.ts` (search, filters) | Yes, uncommitted on `stage2/frontend` (mock data, nothing saved) | e2e + unit (docs/test-results/stage2/e2e.txt, unit.txt) | |
+| FR-26 Subscriptions (create/edit/renew) | A-13, A-15 | | e2e `admin.spec.ts`/`admin-states.spec.ts`: add subscription with proposed end/amount, end-before-start blocked, overlap warning; unit `admin-ledger.test.ts`, `admin-validation.test.ts`, `admin-rules.test.ts` | Yes, uncommitted on `stage2/frontend` (mock data, nothing saved) | e2e + unit; renew/edit saves unit-tested at repository level only (docs/test-results/stage2/e2e.txt, unit.txt) | |
+| FR-27 Subscription status and renewals due | A-12, A-13, A-15, A-08 | | unit `admin-status.test.ts` (status, renewal due); e2e dashboard/list counts | Yes, uncommitted on `stage2/frontend` (mock data, nothing saved) | e2e + unit; stand-in module, real rule is SQL at Stage 3 (docs/test-results/stage2/e2e.txt, unit.txt) | |
+| FR-28 Record payments manually | A-13, A-16, A-17 | | e2e `admin.spec.ts`/`admin-states.spec.ts`: record payment, part payment, duplicate reference, future date, void; unit `admin-validation.test.ts`, `admin-rules.test.ts` | Yes, uncommitted on `stage2/frontend` (mock data, nothing saved) | e2e + unit (docs/test-results/stage2/e2e.txt, unit.txt) | |
+| FR-29 Payment status paid/unpaid/overdue and dues | A-12, A-13, A-16 | | e2e `admin.spec.ts`/`admin-states.spec.ts`: balances and status after payments; unit `admin-ledger.test.ts`, `admin-status.test.ts` | Yes, uncommitted on `stage2/frontend` (mock data, nothing saved) | e2e + unit; stand-in for SQL view (docs/test-results/stage2/e2e.txt, unit.txt) | |
+| FR-30 Dashboard overview | A-02 | | e2e `admin.spec.ts`/`admin-states.spec.ts`: cards open filtered lists with matching counts; zero state; unit `admin-mock-repository.test.ts` | Yes, uncommitted on `stage2/frontend` (mock data, nothing saved) | e2e + unit (docs/test-results/stage2/e2e.txt, unit.txt) | |
 
 Open dependencies that may change rows: Q-01 (confirm v1 admin scope), Q-15 (editable static copy), Q-25 (menu per plan), Q-28 to Q-31 (skip/pause tracking, office invoices, receipts, delivery lists: not FRs; would add FRs via change request), Q-02 (admin roles).

@@ -1,0 +1,13 @@
+.next
+node_modules
+design
+docs
+approvals
+intake
+scripts
+playwright-report
+test-results
+package-lock.json
+.github
+CLAUDE.md
+.claude
