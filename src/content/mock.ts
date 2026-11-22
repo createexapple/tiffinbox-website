@@ -174,6 +174,8 @@ export const MOCK_CONTENT: ContentSnapshot = {
     { id: 'addon-shami', name: 'Shami kebab', price: 90 },
   ],
 
+  pageImages: { homeHero: null, ogShare: null },
+
   faq: [
     {
       id: 'faq-where',

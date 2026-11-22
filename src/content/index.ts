@@ -14,6 +14,7 @@ import type {
   ContentInfo,
   CustomDish,
   FaqItem,
+  PageImages,
   MenuWeek,
   PageCopy,
   Plan,
@@ -62,6 +63,10 @@ export async function getAddOns(): Promise<AddOn[]> {
 }
 
 /** FR-11 FAQ entries in admin-defined order. */
+export async function getPageImages(): Promise<PageImages> {
+  return (await getContentSnapshot()).pageImages;
+}
+
 export async function getFaq(): Promise<FaqItem[]> {
   return (await getContentSnapshot()).faq;
 }

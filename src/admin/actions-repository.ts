@@ -39,7 +39,12 @@ import {
   restoreCustomerAction,
   updateCustomerAction,
 } from './server/customers';
-import { deleteMediaAction, listMediaAction, uploadMediaAction } from './server/media';
+import {
+  deleteMediaAction,
+  listMediaAction,
+  setPageImageAction,
+  uploadMediaAction,
+} from './server/media';
 import {
   cancelMenuScheduleAction,
   copyMenuWeekAction,
@@ -198,6 +203,9 @@ export class ActionsAdminRepository implements AdminRepository {
   };
   deleteMedia = async (id: string) => {
     await this.write(deleteMediaAction(id));
+  };
+  setPageImage: AdminRepository['setPageImage'] = async (slot, mediaId) => {
+    await this.write(setPageImageAction(slot, mediaId));
   };
 
   // ---------- menu ----------

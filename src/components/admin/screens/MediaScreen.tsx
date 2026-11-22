@@ -76,6 +76,23 @@ export function MediaScreen() {
     void startUpload(file, alt.trim());
   }
 
+  const HOME = 'Home page (main photo)';
+  async function toggleHomePhoto(row: MediaRow) {
+    const isHome = row.usedOn.includes(HOME);
+    setError(null);
+    try {
+      await repo.setPageImage('home_hero', isHome ? null : row.id);
+      toast({
+        text: isHome
+          ? 'Removed from the Home page. Publish to update the website.'
+          : 'Set as the Home page photo. Publish to show it on the website.',
+      });
+      list.reload();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Please try again.');
+    }
+  }
+
   async function confirmDelete(row: MediaRow) {
     setDeleting(null);
     try {
@@ -183,6 +200,14 @@ export function MediaScreen() {
                     <br />
                     <span className="small">Alt: {m.altText}</span>
                     <br />
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => void toggleHomePhoto(m)}
+                    >
+                      {m.usedOn.includes(HOME) ? 'Remove from Home page' : 'Use on Home page'}
+                      <span className="sr-only"> {m.fileName}</span>
+                    </button>{' '}
                     <button
                       type="button"
                       className="btn btn-secondary btn-sm"

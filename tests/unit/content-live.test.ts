@@ -106,3 +106,36 @@ describe('splitIncludes', () => {
     expect(splitIncludes('')).toEqual([]);
   });
 });
+
+describe('page images (FR-21)', () => {
+  const map = (page_images: unknown) =>
+    mapPublicContent(publicContentDocument({ page_images }), { source: 'live' }).pageImages;
+
+  it('maps an assigned home photo and leaves empty places null', () => {
+    expect(
+      map({
+        home_hero: { path: 'ab/cdef0123.jpg', alt: 'Tiffin boxes', width: 1600, height: 1200 },
+      }),
+    ).toEqual({
+      homeHero: { path: 'ab/cdef0123.jpg', alt: 'Tiffin boxes', width: 1600, height: 1200 },
+      ogShare: null,
+    });
+  });
+  it('tolerates a missing or empty page_images object (older saved copies)', () => {
+    expect(map(undefined)).toEqual({ homeHero: null, ogShare: null });
+    expect(map({})).toEqual({ homeHero: null, ogShare: null });
+    expect(map({ home_hero: null })).toEqual({ homeHero: null, ogShare: null });
+  });
+  it('ignores a value that is not a safe object path instead of rendering it', () => {
+    for (const path of [
+      'https://evil.example/x.jpg',
+      '../secret',
+      'a/../b.jpg',
+      '',
+      'x y.jpg',
+      7,
+    ]) {
+      expect(map({ home_hero: { path, alt: 'x' } }).homeHero).toBeNull();
+    }
+  });
+});

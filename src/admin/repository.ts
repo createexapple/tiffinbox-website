@@ -16,6 +16,7 @@ import type {
   DishDraft,
   FaqDraft,
   MediaItem,
+  PageImageSlot,
   MenuSlot,
   MenuWeekView,
   OpsSettings,
@@ -130,6 +131,8 @@ export interface AdminRepository {
   /** The server checks type, size and content again, strips metadata, and stores a sanitised master. */
   uploadMedia(file: File, altText: string): Promise<MediaRow>;
   deleteMedia(id: string): Promise<void>;
+  /** Puts an image in a fixed place on the site (draft until published). `mediaId` null clears the place. */
+  setPageImage(slot: PageImageSlot, mediaId: string | null): Promise<void>;
 
   // ---- Menu weeks ----
   listMenuWeeks(): Promise<MenuWeekView[]>;

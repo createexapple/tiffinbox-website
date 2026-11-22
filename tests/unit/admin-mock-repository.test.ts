@@ -319,3 +319,20 @@ describe('simulated failures (mock controls)', () => {
     await expect(store.listCustomers({})).resolves.toHaveLength(8);
   });
 });
+
+describe('page images', () => {
+  it('assigns and clears the Home page photo, and reports it in "used on"', async () => {
+    const store = new MockAdminStore('sample');
+    const [first] = await store.listMedia();
+    if (!first) throw new Error('seed has no media');
+    await store.setPageImage('home_hero', first.id);
+    expect((await store.listMedia()).find((m) => m.id === first.id)?.usedOn).toContain(
+      'Home page (main photo)',
+    );
+    await store.setPageImage('home_hero', null);
+    expect((await store.listMedia()).find((m) => m.id === first.id)?.usedOn).not.toContain(
+      'Home page (main photo)',
+    );
+    await expect(store.setPageImage('home_hero', 'missing')).rejects.toThrow();
+  });
+});

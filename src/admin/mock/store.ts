@@ -516,6 +516,21 @@ export class MockAdminStore implements AdminRepository, MockControls {
     this.touch();
   };
 
+  setPageImage: AdminRepository['setPageImage'] = async (slot, mediaId) => {
+    if (mediaId === null) {
+      delete this.state.pageImages[slot];
+    } else {
+      if (!this.state.media.some((m) => m.id === mediaId)) {
+        throw new RepoError('not_found', 'This image was not found.');
+      }
+      this.state.pageImages[slot] = mediaId;
+    }
+    this.log('Images', {
+      summary: `${mediaId === null ? 'Removed' : 'Set'} ${slot === 'home_hero' ? 'the Home page photo' : 'the share preview image'}`,
+    });
+    this.touch();
+  };
+
   // ---------- menu ----------
 
   listMenuWeeks = () => this.read(() => this.weekViews());

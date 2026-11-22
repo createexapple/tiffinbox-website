@@ -108,6 +108,20 @@ export interface ContentInfo {
   stale?: boolean;
 }
 
+/** A published photo (FR-21). `path` is the object path inside the public media bucket. */
+export interface PublicImage {
+  path: string;
+  alt: string;
+  width: number | null;
+  height: number | null;
+}
+
+/** Photos assigned to fixed places on the site. Null while no photo is assigned (pages show the placeholder). */
+export interface PageImages {
+  homeHero: PublicImage | null;
+  ogShare: PublicImage | null;
+}
+
 /** Everything the content layer can hold, as one object. Used by the mock module and, later, the live source. */
 export interface ContentSnapshot {
   info: ContentInfo;
@@ -118,6 +132,7 @@ export interface ContentSnapshot {
   customDishes: CustomDish[];
   addOns: AddOn[];
   faq: FaqItem[];
+  pageImages: PageImages;
 }
 
 /** Static page copy (A-16: developer-maintained in v1). Built from content data so no price or time is typed twice. */

@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { JsonLd } from '@/components/public/JsonLd';
-import { PhotoPlaceholder } from '@/components/public/PhotoPlaceholder';
+import { PagePhoto } from '@/components/public/PagePhoto';
 import { Steps } from '@/components/public/Steps';
-import { getMealsFromPrice, getPageCopy, getSiteSettings } from '@/content';
+import { getMealsFromPrice, getPageCopy, getPageImages, getSiteSettings } from '@/content';
 import { formatRs } from '@/lib/format';
 import { pageMetadata } from '@/lib/seo';
 import { getSiteUrl, isSiteUrlConfigured } from '@/lib/site-url';
@@ -22,10 +22,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [copy, settings, mealsFrom] = await Promise.all([
+  const [copy, settings, mealsFrom, pageImages] = await Promise.all([
     getPageCopy(),
     getSiteSettings(),
     getMealsFromPrice(),
+    getPageImages(),
   ]);
   const { home, steps } = copy;
 
@@ -55,7 +56,11 @@ export default async function HomePage() {
               </Link>
             </div>
           </div>
-          <PhotoPlaceholder description="tiffin boxes with steaming food (hero)" />
+          <PagePhoto
+            image={pageImages.homeHero}
+            description="tiffin boxes with steaming food (hero)"
+            priority
+          />
         </div>
       </section>
 

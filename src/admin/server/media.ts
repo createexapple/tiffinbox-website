@@ -10,6 +10,7 @@ import { createSessionClient } from '@/lib/supabase/server';
 import { validateAltText, validateMediaFile } from '../validation/content';
 import { weekLabel } from '../format';
 import type { MediaRow } from '../repository';
+import type { PageImageSlot } from '../types';
 import { mapMedia, type MediaDb } from './mappers';
 import { MediaRejected, processUpload } from './media-processing';
 import type { ActionResult } from './result';
@@ -144,6 +145,44 @@ export async function uploadMediaAction(form: FormData): Promise<ActionResult<Me
       usedOn: [],
       url: db.storage.from(BUCKET).getPublicUrl(created.storage_path).data.publicUrl,
     };
+  });
+}
+
+const PAGE_SLOTS: readonly string[] = ['home_hero', 'og_share'];
+
+/**
+ * Assigns an image to a fixed place on the site (or clears the place with `mediaId` null). This changes the
+ * draft only: visitors see it after the next Publish.
+ */
+export async function setPageImageAction(
+  slot: PageImageSlot,
+  mediaId: string | null,
+): Promise<ActionResult<null>> {
+  return runAction('setPageImage', 'save_failed', async () => {
+    if (!PAGE_SLOTS.includes(slot)) stop('invalid', 'Unknown place for an image.');
+    const db = await createSessionClient();
+    if (mediaId === null) {
+      check((await db.from('page_images').delete().eq('slot_key', slot)).error, WRITE);
+      return null;
+    }
+    assertUuid(mediaId, 'image');
+    const found = unwrap<{ id: string }[] | null>(
+      await db.from('media').select('id').eq('id', mediaId),
+      READ,
+    );
+    if (!found || found.length === 0) stop('not_found', 'This image was not found.');
+    check(
+      (
+        await db
+          .from('page_images')
+          .upsert(
+            { slot_key: slot, media_id: mediaId, updated_at: new Date().toISOString() },
+            { onConflict: 'slot_key' },
+          )
+      ).error,
+      WRITE,
+    );
+    return null;
   });
 }
 
