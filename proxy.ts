@@ -14,9 +14,9 @@ import {
   ACTIVE_AT_COOKIE,
   LOGIN_AT_COOKIE,
   evaluateSession,
-  parseTimestamp,
   timestampCookieOptions,
 } from '@/lib/auth/session-policy';
+import { readActivity, sessionClaims, signActivity } from '@/lib/auth/activity-token';
 import { getSessionPolicy, getSupabaseConfig, isMockBackend } from '@/lib/env';
 
 function redirectToLogin(request: NextRequest, reason?: 'expired'): NextResponse {
@@ -62,12 +62,16 @@ export async function proxy(request: NextRequest) {
   const { data, error } = await supabase.auth.getClaims();
   const policy = getSessionPolicy();
   const now = Date.now();
+  // Both limits come from values the browser cannot forge (SEC-01): the sign-in time inside the verified
+  // token, and the HMAC-signed activity cookie bound to this session. LOGIN_AT_COOKIE is only a hint that
+  // tells "was signed in" from "never signed in"; it decides nothing.
+  const session = sessionClaims(!error ? data?.claims : null);
   const verdict = evaluateSession({
     authenticated: !error && !!data?.claims,
     hadTimestamps: request.cookies.has(LOGIN_AT_COOKIE) || request.cookies.has(ACTIVE_AT_COOKIE),
     now,
-    loginAt: parseTimestamp(request.cookies.get(LOGIN_AT_COOKIE)?.value),
-    activeAt: parseTimestamp(request.cookies.get(ACTIVE_AT_COOKIE)?.value),
+    loginAt: session.loginAt,
+    activeAt: readActivity(request.cookies.get(ACTIVE_AT_COOKIE)?.value, session.sessionId),
     idleMs: policy.idleMs,
     absoluteMs: policy.absoluteMs,
   });
@@ -93,13 +97,16 @@ export async function proxy(request: NextRequest) {
     }
     if (isPrefetch) return withCookies(NextResponse.next({ request }));
     // Activity: pages and server actions both count (FR-13 idle timeout is "no activity").
-    request.cookies.set(ACTIVE_AT_COOKIE, String(now));
+    const activity = signActivity(session.sessionId, now);
+    if (activity) request.cookies.set(ACTIVE_AT_COOKIE, activity);
     const response = withCookies(NextResponse.next({ request }));
-    response.cookies.set(
-      ACTIVE_AT_COOKIE,
-      String(now),
-      timestampCookieOptions(policy.absoluteMs / 1000, secure),
-    );
+    if (activity) {
+      response.cookies.set(
+        ACTIVE_AT_COOKIE,
+        activity,
+        timestampCookieOptions(policy.absoluteMs / 1000, secure),
+      );
+    }
     return response;
   }
 

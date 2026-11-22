@@ -2,7 +2,7 @@
  * Server-side admin guard (architecture sec. 7, layer 2). `requireAdmin()` is called at the top of every admin
  * page and every server action. It does NOT trust the cookie alone:
  *   1. asks Supabase Auth to verify the access token (`getUser`),
- *   2. checks the idle / absolute session limits (FR-13),
+ *   2. checks the idle / absolute session limits (FR-13) from the signed token and the signed activity cookie,
  *   3. reads the user's own `admin_users` row and requires `is_active` (the same test as the database's
  *      `app.is_admin()`, which every RLS policy uses as the third layer).
  * A signed-in user who is not an active admin gets nothing.
@@ -12,12 +12,8 @@ import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getSessionPolicy, getSupabaseConfig, isMockBackend } from '@/lib/env';
-import {
-  ACTIVE_AT_COOKIE,
-  LOGIN_AT_COOKIE,
-  evaluateSession,
-  parseTimestamp,
-} from '@/lib/auth/session-policy';
+import { ACTIVE_AT_COOKIE, LOGIN_AT_COOKIE, evaluateSession } from '@/lib/auth/session-policy';
+import { readActivity, sessionClaims } from '@/lib/auth/activity-token';
 import { createSessionClient } from '@/lib/supabase/server';
 
 export interface AdminContext {
@@ -61,14 +57,17 @@ async function resolveAdmin(): Promise<{ admin: AdminContext } | { reason: AuthF
   const supabase = await createSessionClient();
   const { data, error } = await supabase.auth.getUser();
   const hadTimestamps = store.has(LOGIN_AT_COOKIE) || store.has(ACTIVE_AT_COOKIE);
+  // Limits are decided from the verified token and the signed activity cookie, never from a plain cookie (SEC-01).
+  const verified = !error && data.user ? await supabase.auth.getClaims() : null;
+  const session = sessionClaims(verified && !verified.error ? verified.data?.claims : null);
 
   const policy = getSessionPolicy();
   const verdict = evaluateSession({
     authenticated: !error && data.user !== null,
     hadTimestamps,
     now: Date.now(),
-    loginAt: parseTimestamp(store.get(LOGIN_AT_COOKIE)?.value),
-    activeAt: parseTimestamp(store.get(ACTIVE_AT_COOKIE)?.value),
+    loginAt: session.loginAt,
+    activeAt: readActivity(store.get(ACTIVE_AT_COOKIE)?.value, session.sessionId),
     idleMs: policy.idleMs,
     absoluteMs: policy.absoluteMs,
   });

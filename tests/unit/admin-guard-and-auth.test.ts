@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { readActivity, signActivity } from '@/lib/auth/activity-token';
 
 // ---- fakes for the framework and Supabase (no network) ----
 interface FakeUser {
@@ -11,6 +12,8 @@ const state = {
   cookies: new Map<string, string>(),
   signInError: null as { status?: number; code?: string } | null,
   signedOut: 0,
+  /** Sign-in time carried inside the (fake) verified token, epoch milliseconds. */
+  tokenLoginAt: 0,
   headers: new Map<string, string>(),
 };
 
@@ -37,13 +40,26 @@ vi.mock('@/lib/supabase/server', () => {
         state.user
           ? { data: { user: state.user }, error: null }
           : { data: { user: null }, error: { message: 'no session' } },
+      getClaims: async () =>
+        state.user
+          ? {
+              data: {
+                claims: {
+                  sub: state.user.id,
+                  session_id: SESSION_ID,
+                  amr: [{ method: 'password', timestamp: Math.floor(state.tokenLoginAt / 1000) }],
+                },
+              },
+              error: null,
+            }
+          : { data: null, error: { message: 'no session' } },
       signInWithPassword: async () =>
         state.signInError || !state.user
           ? {
               data: { user: null },
               error: state.signInError ?? { status: 400, code: 'invalid_credentials' },
             }
-          : { data: { user: state.user }, error: null },
+          : { data: { user: state.user, session: { access_token: 'fake' } }, error: null },
       signOut: async () => {
         state.signedOut += 1;
         return { error: null };
@@ -59,6 +75,9 @@ vi.mock('@/lib/supabase/server', () => {
 });
 
 const NOW = 1_800_000_000_000;
+const SESSION_ID = 'session-1';
+/** A correctly signed "last active" cookie for the fake session. */
+const active = (at: number): string => signActivity(SESSION_ID, at) as string;
 
 function fresh(): void {
   state.user = null;
@@ -66,10 +85,13 @@ function fresh(): void {
   state.cookies = new Map();
   state.signInError = null;
   state.signedOut = 0;
+  state.tokenLoginAt = NOW;
   state.headers = new Map([['x-forwarded-for', '203.0.113.7']]);
   process.env.SUPABASE_URL = 'https://example.supabase.co';
   process.env.SUPABASE_PUBLISHABLE_KEY = 'test-key';
   delete process.env.TIFFINBOX_TEST_MOCK_BACKEND;
+  delete process.env.APP_ENV;
+  delete process.env.SESSION_SIGNING_SECRET;
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(NOW);
 }
@@ -77,8 +99,9 @@ function fresh(): void {
 function signedInAdmin(overrides: Partial<NonNullable<typeof state.adminRow>> = {}): void {
   state.user = { id: 'u1', email: 'owner@example.test' };
   state.adminRow = { display_name: 'Owner', role: 'owner', is_active: true, ...overrides };
+  state.tokenLoginAt = NOW - 5 * 60_000;
   state.cookies.set('tb_login_at', String(NOW - 5 * 60_000));
-  state.cookies.set('tb_active_at', String(NOW - 60_000));
+  state.cookies.set('tb_active_at', active(NOW - 60_000));
 }
 
 beforeEach(() => {
@@ -122,10 +145,34 @@ describe('requireAdmin (server-side guard, layer 2)', () => {
 
   it('refuses an idle session and ends it on the Auth server', async () => {
     signedInAdmin();
-    state.cookies.set('tb_active_at', String(NOW - 31 * 60_000));
+    state.cookies.set('tb_active_at', active(NOW - 31 * 60_000));
     const { requireAdmin } = await import('@/lib/auth/session');
     await expect(requireAdmin()).rejects.toMatchObject({ reason: 'expired' });
     expect(state.signedOut).toBe(1);
+  });
+
+  it('ignores forged timestamp cookies (SEC-01)', async () => {
+    // Unsigned "I was active just now": refused.
+    signedInAdmin();
+    state.cookies.set('tb_active_at', String(NOW));
+    const unsigned = await import('@/lib/auth/session');
+    await expect(unsigned.requireAdmin()).rejects.toMatchObject({ reason: 'expired' });
+
+    // A signature made for another session: refused.
+    vi.resetModules();
+    signedInAdmin();
+    state.cookies.set('tb_active_at', signActivity('another-session', NOW) as string);
+    const moved = await import('@/lib/auth/session');
+    await expect(moved.requireAdmin()).rejects.toMatchObject({ reason: 'expired' });
+
+    // Rewriting the login-time cookie does not extend a session past the absolute limit:
+    // the sign-in time comes from the token.
+    vi.resetModules();
+    signedInAdmin();
+    state.tokenLoginAt = NOW - 13 * 3_600_000;
+    state.cookies.set('tb_login_at', String(NOW));
+    const old = await import('@/lib/auth/session');
+    await expect(old.requireAdmin()).rejects.toMatchObject({ reason: 'expired' });
   });
 
   it('page guard redirects to the login page (with the expired reason after a timeout)', async () => {
@@ -133,7 +180,7 @@ describe('requireAdmin (server-side guard, layer 2)', () => {
     await expect(plain.requireAdminPage()).rejects.toThrow('REDIRECT:/admin/login');
     vi.resetModules();
     signedInAdmin();
-    state.cookies.set('tb_active_at', String(NOW - 60 * 60_000));
+    state.cookies.set('tb_active_at', active(NOW - 60 * 60_000));
     const expired = await import('@/lib/auth/session');
     await expect(expired.requireAdminPage()).rejects.toThrow(
       'REDIRECT:/admin/login?reason=expired',
@@ -242,7 +289,19 @@ describe('signInAction (generic errors, throttling, admin check)', () => {
       data: { displayName: 'Owner' },
     });
     expect(state.cookies.get('tb_login_at')).toBe(String(NOW));
-    expect(state.cookies.get('tb_active_at')).toBe(String(NOW));
+    expect(readActivity(state.cookies.get('tb_active_at'), SESSION_ID)).toBe(NOW);
+  });
+
+  it('refuses sign-in on a deployed environment that has no signing secret (fails closed)', async () => {
+    process.env.APP_ENV = 'staging';
+    state.user = { id: 'u1', email: 'owner@example.test' };
+    state.adminRow = { display_name: 'Owner', role: 'owner', is_active: true };
+    const { signInAction } = await import('@/admin/server/auth');
+    expect(await signInAction('owner@example.test', 'password-123456')).toMatchObject({
+      ok: false,
+    });
+    expect(state.cookies.has('tb_active_at')).toBe(false);
+    expect(state.signedOut).toBe(1);
   });
 
   it('never logs the email, the password or the address', async () => {

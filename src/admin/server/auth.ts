@@ -14,6 +14,7 @@ import {
   LOGIN_AT_COOKIE,
   timestampCookieOptions,
 } from '@/lib/auth/session-policy';
+import { sessionClaims, signActivity } from '@/lib/auth/activity-token';
 import { LOGIN_THROTTLE_OPTIONS, Throttle } from '@/lib/auth/throttle';
 import { getSessionPolicy } from '@/lib/env';
 import { callerAddress, hashKey } from '@/lib/request';
@@ -103,13 +104,26 @@ async function signIn(
     return recordFailure();
   }
 
+  // Start the idle timer with a signed value bound to this Auth session (SEC-01). The absolute limit needs no
+  // cookie: it is read from the sign-in time inside the token.
+  const claims = await supabase.auth.getClaims(data.session?.access_token);
+  const activity = signActivity(
+    sessionClaims(claims.error ? null : claims.data?.claims).sessionId,
+    now,
+  );
+  if (!activity) {
+    await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+    logAuth('admin_sign_in_refused', { reason: 'session_signing_unavailable' });
+    return failure('load_failed', UNAVAILABLE);
+  }
+
   keys.forEach((k) => throttle.reset(k));
   const policy = getSessionPolicy();
   const store = await cookies();
   const secure = process.env.NODE_ENV === 'production';
   const options = timestampCookieOptions(policy.absoluteMs / 1000, secure);
   store.set(LOGIN_AT_COOKIE, String(now), options);
-  store.set(ACTIVE_AT_COOKIE, String(now), options);
+  store.set(ACTIVE_AT_COOKIE, activity, options);
   logAuth('admin_sign_in', { ok: true });
   return success({ displayName: row.display_name });
 }

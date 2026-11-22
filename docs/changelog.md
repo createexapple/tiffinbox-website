@@ -8,3 +8,7 @@ All notable changes. Format: Keep a Changelog.
 - 2026-11-22: Stage 2 frontend — Next.js app, public site (FR-01..12) and 17 admin screens (FR-13..30) on labelled mock data; 150 unit and 133 e2e tests. No backend, no real auth.
 - 2026-11-22: Stage 3 database — 11 migrations (19 tables with RLS, audit, publishing, menu, operations, status views), rollbacks, seeds, 606 database assertions on local PostgreSQL. Not yet applied to Supabase.
 - 2026-11-22: Stage 3 backend — Supabase auth and guard, server actions for all admin areas, public read path with 60 s cache and last-good fallback, publish/rollback/preview, media pipeline, six new settings fields. 253 unit tests; staging integration NOT RUN.
+- 2026-11-22: Staging integration run against Supabase staging: 100/100 (anon read/deny checks). Admin sign-in confirmed by the Engineering Lead in the browser; staging e2e admin flows still not run.
+- 2026-11-22: Stage 3 security review (`docs/security/stage3-security-review.md`): no Critical/High; 4 Medium, 8 Low, 2 Info.
+### Security
+- 2026-11-22: SEC-01 fixed — idle/absolute session limits now come from the signed token and an HMAC-signed activity cookie (`SESSION_SIGNING_SECRET` required on deployed environments). SEC-04 partly fixed — baseline security headers on all responses; a nonce-based script CSP is still open. 260 unit tests. Not yet re-verified by the security engineer; real-token sign-in after the change not yet confirmed.

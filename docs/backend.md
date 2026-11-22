@@ -23,6 +23,7 @@ Names are in `.env.example` (placeholders only). Real values live in `.env.local
 | `SUPABASE_PUBLISHABLE_KEY` | yes | Publishable (formerly anon) key. Identifies the project only; RLS decides what it can do |
 | `APP_ENV` | on every deployed host | `staging` or `production`. The test mock backend is refused when it is `staging` or `production` |
 | `REVALIDATE_SECRET` | for `/api/revalidate` | At least 16 random characters. While unset the endpoint answers 503 |
+| `SESSION_SIGNING_SECRET` | on every deployed environment | At least 32 random characters (`openssl rand -hex 32`). Signs the admin "last active" cookie (security review SEC-01). When `APP_ENV` is `staging` or `production` and this is unset, admin sign-in is refused. Not needed locally |
 | `LAST_GOOD_CONTENT_PATH` | recommended on a host | Persistent path (Azure App Service: under `/home`). Default: the OS temp dir |
 | `ADMIN_IDLE_MINUTES`, `ADMIN_SESSION_HOURS` | optional | Idle timeout (default 30) and absolute lifetime (default 12), FR-13. To be confirmed with the client |
 | `APP_VERSION` | optional | Shown by `GET /api/health` |
