@@ -1,0 +1,29 @@
+
+> tiffinbox-website@0.1.0 test:e2e:staging
+> node --env-file-if-exists=.env.local ./node_modules/@playwright/test/cli.js test -c playwright.staging.config.ts
+
+
+Running 19 tests using 1 worker
+
+  -   1 [chromium] › tests/staging/admin-flows.spec.ts:13:1 › sign in, see the dashboard on real figures, stay signed in on reload, log out
+  -   2 [chromium] › tests/staging/admin-flows.spec.ts:28:1 › customers: create, find by search, archive (cleans up after itself)
+  -   3 [chromium] › tests/staging/admin-flows.spec.ts:49:1 › history lists the change that was just made, with the actor
+  -   4 [chromium] › tests/staging/admin-flows.spec.ts:55:1 › settings: a draft change round-trips and is restored; the settings page has the new fields
+  -   5 [chromium] › tests/staging/admin-flows.spec.ts:79:1 › preview: the Publish screen opens the public site with drafts and the Preview bar, and it can be exited
+  -   6 [chromium] › tests/staging/admin-flows.spec.ts:95:1 › password change: a wrong current password is refused with a clear message
+  -   7 [chromium] › tests/staging/admin-flows.spec.ts:107:1 › image upload: a text file renamed .jpg is refused by the server
+  ✓   8 [chromium] › tests/staging/public-and-guard.spec.ts:6:3 › public site on the real published release › /api/health is up and returns no content data (79ms)
+  ✓   9 [chromium] › tests/staging/public-and-guard.spec.ts:12:3 › public site on the real published release › pages render from the database, with no sample-content banner (2.5s)
+  ✓  10 [chromium] › tests/staging/public-and-guard.spec.ts:22:3 › public site on the real published release › /plans shows priced plans and /menu shows a table or the designed "not published" state (572ms)
+  ✓  11 [chromium] › tests/staging/public-and-guard.spec.ts:33:3 › public site on the real published release › revalidate refuses callers without the secret (51ms)
+  ✓  12 [chromium] › tests/staging/public-and-guard.spec.ts:47:5 › admin guard (no session) › /admin redirects to the login page (527ms)
+  ✓  13 [chromium] › tests/staging/public-and-guard.spec.ts:47:5 › admin guard (no session) › /admin/customers redirects to the login page (373ms)
+  ✓  14 [chromium] › tests/staging/public-and-guard.spec.ts:47:5 › admin guard (no session) › /admin/payments redirects to the login page (418ms)
+  ✓  15 [chromium] › tests/staging/public-and-guard.spec.ts:47:5 › admin guard (no session) › /admin/publish redirects to the login page (480ms)
+  ✓  16 [chromium] › tests/staging/public-and-guard.spec.ts:47:5 › admin guard (no session) › /admin/settings redirects to the login page (375ms)
+  ✓  17 [chromium] › tests/staging/public-and-guard.spec.ts:54:3 › admin guard (no session) › the session-expired redirect message (370ms)
+  ✓  18 [chromium] › tests/staging/public-and-guard.spec.ts:59:3 › admin guard (no session) › preview cannot be switched on without an admin session (388ms)
+  ✓  19 [chromium] › tests/staging/public-and-guard.spec.ts:66:3 › admin guard (no session) › a wrong login gives the generic message and no real mock banner (1.5s)
+
+  7 skipped
+  12 passed (24.2s)
