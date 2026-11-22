@@ -10,7 +10,7 @@ import { createSessionClient } from '@/lib/supabase/server';
 import { validateAltText, validateMediaFile } from '../validation/content';
 import { weekLabel } from '../format';
 import type { MediaRow } from '../repository';
-import type { PageImageSlot } from '../types';
+import { PAGE_IMAGE_SLOTS, pageImageLabel, type PageImageSlot } from '../types';
 import { mapMedia, type MediaDb } from './mappers';
 import { MediaRejected, processUpload } from './media-processing';
 import type { ActionResult } from './result';
@@ -50,7 +50,7 @@ function usedOn(usage: Usage, mediaId: string): string[] {
   const out: string[] = [];
   for (const p of usage.pages) {
     if (p.media_id !== mediaId) continue;
-    out.push(p.slot_key === 'og_share' ? 'Share preview image' : 'Home page (main photo)');
+    out.push(pageImageLabel(p.slot_key));
   }
   for (const d of usage.dishes) if (d.media_id === mediaId) out.push(`Customize page (${d.name})`);
   for (const s of usage.slots) {
@@ -148,7 +148,7 @@ export async function uploadMediaAction(form: FormData): Promise<ActionResult<Me
   });
 }
 
-const PAGE_SLOTS: readonly string[] = ['home_hero', 'og_share'];
+const PAGE_SLOTS: readonly string[] = PAGE_IMAGE_SLOTS.map((s) => s.slot);
 
 /**
  * Assigns an image to a fixed place on the site (or clears the place with `mediaId` null). This changes the

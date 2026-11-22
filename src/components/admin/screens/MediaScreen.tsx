@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { MediaRow } from '@/admin/repository';
 import { MEDIA_MAX_BYTES, validateAltText, validateMediaFile } from '@/admin/validation/content';
 import { useAdmin, useQuery } from '../AdminProvider';
+import { PAGE_IMAGE_SLOTS, pageImageLabel, type PageImageSlot } from '@/admin/types';
 import { MediaPicker, MediaTile } from '../MediaPicker';
 import { TextField } from '../fields';
 import { useToast } from '../Toast';
@@ -76,16 +77,15 @@ export function MediaScreen() {
     void startUpload(file, alt.trim());
   }
 
-  const HOME = 'Home page (main photo)';
-  async function toggleHomePhoto(row: MediaRow) {
-    const isHome = row.usedOn.includes(HOME);
+  /** Puts the photo in a fixed place on the site, or takes it out again. A draft change until published. */
+  async function placePhoto(row: MediaRow, slot: PageImageSlot, remove: boolean) {
     setError(null);
     try {
-      await repo.setPageImage('home_hero', isHome ? null : row.id);
+      await repo.setPageImage(slot, remove ? null : row.id);
       toast({
-        text: isHome
-          ? 'Removed from the Home page. Publish to update the website.'
-          : 'Set as the Home page photo. Publish to show it on the website.',
+        text: remove
+          ? `Removed from ${pageImageLabel(slot)}. Publish to update the website.`
+          : `Set as ${pageImageLabel(slot)}. Publish to show it on the website.`,
       });
       list.reload();
     } catch (e) {
@@ -200,14 +200,35 @@ export function MediaScreen() {
                     <br />
                     <span className="small">Alt: {m.altText}</span>
                     <br />
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => void toggleHomePhoto(m)}
-                    >
-                      {m.usedOn.includes(HOME) ? 'Remove from Home page' : 'Use on Home page'}
-                      <span className="sr-only"> {m.fileName}</span>
-                    </button>{' '}
+                    <label className="small">
+                      Use this photo as
+                      <select
+                        className="place-select"
+                        value=""
+                        onChange={(event) => {
+                          const slot = event.target.value as PageImageSlot | '';
+                          if (slot !== '') void placePhoto(m, slot, false);
+                        }}
+                      >
+                        <option value="">Choose a place…</option>
+                        {PAGE_IMAGE_SLOTS.filter((s) => !m.usedOn.includes(s.label)).map((s) => (
+                          <option key={s.slot} value={s.slot}>
+                            {s.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    {PAGE_IMAGE_SLOTS.filter((s) => m.usedOn.includes(s.label)).map((s) => (
+                      <button
+                        key={s.slot}
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => void placePhoto(m, s.slot, true)}
+                      >
+                        Remove from {s.label}
+                        <span className="sr-only"> ({m.fileName})</span>
+                      </button>
+                    ))}{' '}
                     <button
                       type="button"
                       className="btn btn-secondary btn-sm"

@@ -108,7 +108,20 @@ export interface MediaItem {
   bytes: number;
 }
 
-export type PageImageSlot = 'home_hero' | 'og_share';
+export type PageImageSlot = 'home_hero' | 'og_share' | 'menu_header' | 'about_main' | 'logo';
+
+/** The fixed photo places on the site, in the order the admin lists them, with the label shown to staff. */
+export const PAGE_IMAGE_SLOTS: readonly { slot: PageImageSlot; label: string }[] = [
+  { slot: 'logo', label: 'Logo (header)' },
+  { slot: 'home_hero', label: 'Home page (main photo)' },
+  { slot: 'menu_header', label: 'Menu page (photo)' },
+  { slot: 'about_main', label: 'About page (photo)' },
+  { slot: 'og_share', label: 'Share preview image' },
+];
+
+export function pageImageLabel(slot: string): string {
+  return PAGE_IMAGE_SLOTS.find((s) => s.slot === slot)?.label ?? slot;
+}
 
 /** Everything that is published as one release (architecture sec. 8.1). */
 export interface ContentSnapshot {

@@ -205,7 +205,13 @@ function mapImage(raw: unknown): PublicImage | null {
 
 function mapPageImages(raw: unknown): PageImages {
   const slots = raw !== null && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
-  return { homeHero: mapImage(slots.home_hero), ogShare: mapImage(slots.og_share) };
+  return {
+    homeHero: mapImage(slots.home_hero),
+    ogShare: mapImage(slots.og_share),
+    menuHeader: mapImage(slots.menu_header),
+    aboutMain: mapImage(slots.about_main),
+    logo: mapImage(slots.logo),
+  };
 }
 
 export interface MapOptions {

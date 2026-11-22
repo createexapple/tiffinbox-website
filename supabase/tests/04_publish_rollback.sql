@@ -146,6 +146,13 @@ select tt.is(public.get_public_content() #>> '{dishes,0,image,alt}', 'Hero alt',
 select tt.is(public.get_public_content() #>> '{page_images,home_hero,path}', 'test/hero.webp', 'page images are published by slot');
 select tt.throws($$delete from public.media where id = 'a0000000-0000-4000-8000-000000000001'$$, '23503', 'an image used by a draft dish cannot be deleted (FK restrict)');
 update public.dishes set media_id = null;
+-- Extra photo places (migration 12): logo, Menu and About are accepted; an unknown place is refused.
+insert into public.page_images (slot_key, media_id) values
+  ('logo', 'a0000000-0000-4000-8000-000000000001'),
+  ('menu_header', 'a0000000-0000-4000-8000-000000000001'),
+  ('about_main', 'a0000000-0000-4000-8000-000000000001');
+select tt.is((select count(*)::int from public.page_images where slot_key in ('logo','menu_header','about_main')), 3, 'logo, menu and about photo places are accepted');
+select tt.throws($$insert into public.page_images (slot_key, media_id) values ('footer', 'a0000000-0000-4000-8000-000000000001')$$, '23514', 'an unknown photo place is refused');
 delete from public.page_images;
 select tt.throws($$delete from public.media where id = 'a0000000-0000-4000-8000-000000000001'$$, '23503', 'an image that is part of the live release cannot be deleted');
 select tt.throws($$insert into public.media (storage_path, alt_text, width, height, bytes) values ('p', '   ', 1, 1, 1)$$, '23514', 'alt text is required for every image (FR-21)');

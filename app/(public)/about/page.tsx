@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import { FaqList } from '@/components/public/FaqList';
 import { NoteBox } from '@/components/public/NoteBox';
-import { PhotoPlaceholder } from '@/components/public/PhotoPlaceholder';
+import { PagePhoto } from '@/components/public/PagePhoto';
 import { WhatsAppButton } from '@/components/public/WhatsAppButton';
 import { InstagramIcon } from '@/components/public/icons';
-import { getFaq, getPageCopy, getSiteSettings } from '@/content';
+import { getFaq, getPageCopy, getPageImages, getSiteSettings } from '@/content';
 import { pageMetadata } from '@/lib/seo';
 import { buildWhatsAppLink, instagramUrl, isPlaceholder } from '@/lib/whatsapp';
 
@@ -16,7 +16,12 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default async function AboutPage() {
-  const [settings, faq, copy] = await Promise.all([getSiteSettings(), getFaq(), getPageCopy()]);
+  const [settings, faq, copy, pageImages] = await Promise.all([
+    getSiteSettings(),
+    getFaq(),
+    getPageCopy(),
+    getPageImages(),
+  ]);
   const link = buildWhatsAppLink(settings.whatsappNumber);
   const { about } = copy;
 
@@ -33,7 +38,10 @@ export default async function AboutPage() {
               not the story.
             </div>
           </div>
-          <PhotoPlaceholder description="the kitchen / hands serving food (about)" />
+          <PagePhoto
+            image={pageImages.aboutMain}
+            description="the kitchen / hands serving food (about)"
+          />
         </div>
       </section>
 

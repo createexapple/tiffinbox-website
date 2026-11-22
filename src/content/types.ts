@@ -120,6 +120,9 @@ export interface PublicImage {
 export interface PageImages {
   homeHero: PublicImage | null;
   ogShare: PublicImage | null;
+  menuHeader: PublicImage | null;
+  aboutMain: PublicImage | null;
+  logo: PublicImage | null;
 }
 
 /** Everything the content layer can hold, as one object. Used by the mock module and, later, the live source. */

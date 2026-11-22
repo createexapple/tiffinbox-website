@@ -697,6 +697,14 @@ body:has(.adm-app) {
   padding: var(--sp-2);
   font-size: var(--fs-xs);
 }
+.media-grid .place-select {
+  display: block;
+  width: 100%;
+  margin: var(--sp-1) 0 var(--sp-2);
+}
+.media-grid figcaption .btn {
+  margin-top: var(--sp-1);
+}
 .media-grid .pick {
   background: none;
   border: 0;

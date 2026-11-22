@@ -108,6 +108,7 @@ describe('splitIncludes', () => {
 });
 
 describe('page images (FR-21)', () => {
+  const EMPTY = { homeHero: null, ogShare: null, menuHeader: null, aboutMain: null, logo: null };
   const map = (page_images: unknown) =>
     mapPublicContent(publicContentDocument({ page_images }), { source: 'live' }).pageImages;
 
@@ -119,12 +120,24 @@ describe('page images (FR-21)', () => {
     ).toEqual({
       homeHero: { path: 'ab/cdef0123.jpg', alt: 'Tiffin boxes', width: 1600, height: 1200 },
       ogShare: null,
+      menuHeader: null,
+      aboutMain: null,
+      logo: null,
     });
   });
   it('tolerates a missing or empty page_images object (older saved copies)', () => {
-    expect(map(undefined)).toEqual({ homeHero: null, ogShare: null });
-    expect(map({})).toEqual({ homeHero: null, ogShare: null });
-    expect(map({ home_hero: null })).toEqual({ homeHero: null, ogShare: null });
+    expect(map(undefined)).toEqual(EMPTY);
+    expect(map({})).toEqual(EMPTY);
+    expect(map({ home_hero: null })).toEqual(EMPTY);
+  });
+  it('maps the logo, Menu and About places', () => {
+    const img = (path: string) => ({ path, alt: 'x', width: 10, height: 10 });
+    const out = map({ logo: img('l.png'), menu_header: img('m.jpg'), about_main: img('a.webp') });
+    expect([out.logo?.path, out.menuHeader?.path, out.aboutMain?.path]).toEqual([
+      'l.png',
+      'm.jpg',
+      'a.webp',
+    ]);
   });
   it('ignores a value that is not a safe object path instead of rendering it', () => {
     for (const path of [

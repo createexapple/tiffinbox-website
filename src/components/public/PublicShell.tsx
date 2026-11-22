@@ -4,8 +4,10 @@ import {
   ContentUnavailableError,
   getContentInfo,
   getPageCopy,
+  getPageImages,
   getSiteSettings,
 } from '@/content';
+import { publicMediaUrl } from '@/lib/media-url';
 import { buildWhatsAppLink, isPlaceholder } from '@/lib/whatsapp';
 import { ContentUnavailable } from './ContentUnavailable';
 import { MockBanner } from './MockBanner';
@@ -31,7 +33,12 @@ export async function PublicShell({
 }) {
   let loaded;
   try {
-    loaded = await Promise.all([getSiteSettings(), getPageCopy(), getContentInfo()]);
+    loaded = await Promise.all([
+      getSiteSettings(),
+      getPageCopy(),
+      getContentInfo(),
+      getPageImages(),
+    ]);
   } catch (error) {
     // NFR-08: no content and no last-good copy. Show the designed error state (server-rendered, so it is in
     // the HTML) inside minimal chrome; never a blank page or a crash.
@@ -44,7 +51,8 @@ export async function PublicShell({
     }
     throw error;
   }
-  const [settings, copy, info] = loaded;
+  const [settings, copy, info, pageImages] = loaded;
+  const logoUrl = pageImages.logo ? publicMediaUrl(pageImages.logo.path) : null;
   const link = buildWhatsAppLink(settings.whatsappNumber);
 
   return (
@@ -54,7 +62,7 @@ export async function PublicShell({
       </a>
       <MockBanner info={info} />
       <PreviewBanner info={info} />
-      <SiteHeader businessName={settings.businessName} />
+      <SiteHeader businessName={settings.businessName} logoUrl={logoUrl} />
       <main id="main">{children}</main>
       <OrderEnd link={link} headline={copy.home.orderHeadline} line={copy.home.orderLine} />
       <SiteFooter settings={settings} />

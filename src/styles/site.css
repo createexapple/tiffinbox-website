@@ -270,6 +270,13 @@ a:hover {
   color: var(--text-strong);
   min-height: var(--tap);
 }
+.brand .logo-img {
+  display: block;
+  height: 3rem;
+  width: auto;
+  max-width: 12rem;
+  object-fit: contain;
+}
 .brand .ph-note {
   font-size: var(--fs-xs);
   color: var(--text-muted);

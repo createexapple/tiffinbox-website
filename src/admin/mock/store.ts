@@ -65,6 +65,7 @@ import type {
 } from '../types';
 import { validateMenuSlots } from '../validation/content';
 import { formatPhone } from '../validation/operations';
+import { PAGE_IMAGE_SLOTS, pageImageLabel } from '../types';
 import type { PaymentValue, SubscriptionValue } from '../validation/operations';
 import { buildPublishChecks, describePendingChanges } from './pending';
 import {
@@ -475,8 +476,9 @@ export class MockAdminStore implements AdminRepository, MockControls {
 
   private mediaUsage(mediaId: string): string[] {
     const used: string[] = [];
-    if (this.state.pageImages.home_hero === mediaId) used.push('Home page (main photo)');
-    if (this.state.pageImages.og_share === mediaId) used.push('Share preview image');
+    for (const { slot, label } of PAGE_IMAGE_SLOTS) {
+      if (this.state.pageImages[slot] === mediaId) used.push(label);
+    }
     for (const dish of this.state.dishes) {
       if (dish.mediaId === mediaId) used.push(`Customize page (${dish.name})`);
     }
@@ -509,7 +511,7 @@ export class MockAdminStore implements AdminRepository, MockControls {
     if (!item) throw new RepoError('not_found', 'This image was not found.');
     this.state.media = this.state.media.filter((m) => m.id !== id);
     for (const dish of this.state.dishes) if (dish.mediaId === id) dish.mediaId = null;
-    for (const slot of ['home_hero', 'og_share'] as const) {
+    for (const { slot } of PAGE_IMAGE_SLOTS) {
       if (this.state.pageImages[slot] === id) delete this.state.pageImages[slot];
     }
     this.log('Images', { summary: `Deleted image ${item.fileName}` });
@@ -526,7 +528,7 @@ export class MockAdminStore implements AdminRepository, MockControls {
       this.state.pageImages[slot] = mediaId;
     }
     this.log('Images', {
-      summary: `${mediaId === null ? 'Removed' : 'Set'} ${slot === 'home_hero' ? 'the Home page photo' : 'the share preview image'}`,
+      summary: `${mediaId === null ? 'Removed the image from' : 'Set the image for'} ${pageImageLabel(slot)}`,
     });
     this.touch();
   };

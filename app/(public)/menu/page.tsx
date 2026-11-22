@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { WarningAlert } from '@/components/public/Alert';
 import { MenuTable } from '@/components/public/MenuTable';
 import { NoteBox } from '@/components/public/NoteBox';
-import { PhotoPlaceholder } from '@/components/public/PhotoPlaceholder';
-import { getMenu, getPageCopy, getSiteSettings } from '@/content';
+import { PagePhoto } from '@/components/public/PagePhoto';
+import { getMenu, getPageCopy, getPageImages, getSiteSettings } from '@/content';
 import { isMenuCurrent } from '@/content/derive';
 import { formatMenuWeekLabel, formatWeekdayDate, karachiDateKey } from '@/lib/format';
 import { pageMetadata } from '@/lib/seo';
@@ -18,7 +18,12 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default async function MenuPage() {
-  const [week, settings, copy] = await Promise.all([getMenu(), getSiteSettings(), getPageCopy()]);
+  const [week, settings, copy, pageImages] = await Promise.all([
+    getMenu(),
+    getSiteSettings(),
+    getPageCopy(),
+    getPageImages(),
+  ]);
   const link = buildWhatsAppLink(settings.whatsappNumber);
   // The database says whether the released week covers the current calendar week; mock content derives it.
   const current = week ? (week.isCurrent ?? isMenuCurrent(week, karachiDateKey())) : false;
@@ -70,7 +75,12 @@ export default async function MenuPage() {
             Customize your meal
           </Link>
         </div>
-        <PhotoPlaceholder shape="wide" className="mt-8" description="plated lunch (menu header)" />
+        <PagePhoto
+          image={pageImages.menuHeader}
+          shape="wide"
+          className="mt-8"
+          description="plated lunch (menu header)"
+        />
       </div>
     </section>
   );
