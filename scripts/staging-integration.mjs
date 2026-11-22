@@ -73,8 +73,8 @@ const TABLES = [
   { name: 'page_images', key: 'slot_key', never: '__none__' },
   { name: 'menu_weeks', key: 'id', never: ZERO },
   { name: 'menu_slots', key: 'id', never: ZERO },
-  { name: 'content_releases', key: 'id', never: 0 },
-  { name: 'audit_log', key: 'id', never: 0 },
+  { name: 'content_releases', key: 'id', never: 0, set: { note: '' } },
+  { name: 'audit_log', key: 'id', never: 0, set: { action: 'update' } },
   { name: 'admin_users', key: 'user_id', never: ZERO },
 ];
 const VIEWS = [
@@ -116,10 +116,12 @@ for (const name of VIEWS) {
 }
 
 console.log('\n== writes are refused (anon)');
-for (const { name, key, never } of TABLES) {
+// `set` is used where the key is an identity column: Postgres rejects writing to it (428C9) before it checks
+// permissions, which would hide whether the role is actually denied.
+for (const { name, key, never, set } of TABLES) {
   const ins = refused(await supabase.from(name).insert({}));
   check(`INSERT ${name}`, ins.denied, ins.detail);
-  const upd = refused(await supabase.from(name).update({ [key]: never }).eq(key, never));
+  const upd = refused(await supabase.from(name).update(set ?? { [key]: never }).eq(key, never));
   check(`UPDATE ${name}`, upd.denied, upd.detail);
   const del = refused(await supabase.from(name).delete().eq(key, never));
   check(`DELETE ${name}`, del.denied, del.detail);

@@ -1,0 +1,120 @@
+
+> tiffinbox-website@0.1.0 test:staging
+> node --env-file-if-exists=.env.local scripts/staging-integration.mjs
+
+SUPABASE_URL: set
+SUPABASE_PUBLISHABLE_KEY: set
+
+== public content (anon)
+PASS: get_public_content() answers without an error
+PASS: it returns a published document (schema_version 1)
+PASS: release version is a positive integer
+PASS: only the public keys are present (no customers, payments, subscriptions, drafts)
+PASS: plans are priced
+PASS: the live menu has 21 slots
+PASS: no internal ids leak into menu slots
+
+== direct reads are refused (anon)
+PASS: SELECT customers
+PASS: SELECT payments
+PASS: SELECT subscriptions
+PASS: SELECT subscription_periods
+PASS: SELECT site_settings
+PASS: SELECT pricing_rules
+PASS: SELECT ops_settings
+PASS: SELECT site_state
+PASS: SELECT plans
+PASS: SELECT dishes
+PASS: SELECT addons
+PASS: SELECT faq_entries
+PASS: SELECT media
+PASS: SELECT page_images
+PASS: SELECT menu_weeks
+PASS: SELECT menu_slots
+PASS: SELECT content_releases
+PASS: SELECT audit_log
+PASS: SELECT admin_users
+PASS: SELECT view subscription_status
+PASS: SELECT view period_payment_status
+PASS: SELECT view subscription_balance
+PASS: SELECT view customer_summary
+PASS: SELECT view menu_week_status
+PASS: SELECT view dashboard_overview
+PASS: SELECT view change_history
+
+== writes are refused (anon)
+PASS: INSERT customers
+PASS: UPDATE customers
+PASS: DELETE customers
+PASS: INSERT payments
+PASS: UPDATE payments
+PASS: DELETE payments
+PASS: INSERT subscriptions
+PASS: UPDATE subscriptions
+PASS: DELETE subscriptions
+PASS: INSERT subscription_periods
+PASS: UPDATE subscription_periods
+PASS: DELETE subscription_periods
+PASS: INSERT site_settings
+PASS: UPDATE site_settings
+PASS: DELETE site_settings
+PASS: INSERT pricing_rules
+PASS: UPDATE pricing_rules
+PASS: DELETE pricing_rules
+PASS: INSERT ops_settings
+PASS: UPDATE ops_settings
+PASS: DELETE ops_settings
+PASS: INSERT site_state
+PASS: UPDATE site_state
+PASS: DELETE site_state
+PASS: INSERT plans
+PASS: UPDATE plans
+PASS: DELETE plans
+PASS: INSERT dishes
+PASS: UPDATE dishes
+PASS: DELETE dishes
+PASS: INSERT addons
+PASS: UPDATE addons
+PASS: DELETE addons
+PASS: INSERT faq_entries
+PASS: UPDATE faq_entries
+PASS: DELETE faq_entries
+PASS: INSERT media
+PASS: UPDATE media
+PASS: DELETE media
+PASS: INSERT page_images
+PASS: UPDATE page_images
+PASS: DELETE page_images
+PASS: INSERT menu_weeks
+PASS: UPDATE menu_weeks
+PASS: DELETE menu_weeks
+PASS: INSERT menu_slots
+PASS: UPDATE menu_slots
+PASS: DELETE menu_slots
+PASS: INSERT content_releases
+PASS: UPDATE content_releases
+PASS: DELETE content_releases
+PASS: INSERT audit_log
+PASS: UPDATE audit_log
+PASS: DELETE audit_log
+PASS: INSERT admin_users
+PASS: UPDATE admin_users
+PASS: DELETE admin_users
+
+== admin functions are refused (anon)
+PASS: RPC get_draft_content
+PASS: RPC draft_status
+PASS: RPC publish_content
+PASS: RPC rollback_release
+PASS: RPC save_menu_week
+PASS: RPC copy_menu_week
+PASS: RPC release_menu_week
+PASS: RPC void_payment
+PASS: RPC anonymise_customer
+
+== storage (anon)
+PASS: the private media-incoming bucket lists nothing
+
+assertions passed: 100
+assertions failed: 0
+RESULT: OK
