@@ -12,13 +12,15 @@ const plan = (over: Partial<Plan>): Plan => ({
   priceUnit: 'meal',
   weeklyPrice: 7000,
   mostPopular: false,
+  tag: '',
+  periodLabel: '',
   priceUnresolved: false,
   ...over,
 });
 
 describe('lowestMealPrice (FR-05 "Meals from Rs X")', () => {
   it('is the lowest per-meal price in the seeded plans', () => {
-    expect(lowestMealPrice(MOCK_CONTENT.plans)).toBe(300);
+    expect(lowestMealPrice(MOCK_CONTENT.plans)).toBe(500);
   });
   it('follows a price change with no code change', () => {
     const plans = [plan({ price: { from: 450 } }), plan({ id: 'q', price: { from: 520 } })];

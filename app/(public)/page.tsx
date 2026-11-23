@@ -22,10 +22,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [copy, settings, mealsFrom, pageImages] = await Promise.all([
+  const [copy, settings, pageImages] = await Promise.all([
     getPageCopy(),
     getSiteSettings(),
-    getMealsFromPrice(),
     getPageImages(),
   ]);
   const { home, steps } = copy;
@@ -42,9 +41,13 @@ export default async function HomePage() {
             <h1>{home.headline}</h1>
             <p className="tagline">{home.tagline}</p>
             <p className="lede">{home.lede}</p>
-            {mealsFrom === null ? null : (
-              <p>
-                <span className="chip">Meals from {formatRs(mealsFrom)}</span>
+            {home.tags.length === 0 ? null : (
+              <p className="chips-row">
+                {home.tags.map((tag) => (
+                  <span className="chip" key={tag}>
+                    {tag}
+                  </span>
+                ))}
               </p>
             )}
             <div className="cta-row">
@@ -76,12 +79,6 @@ export default async function HomePage() {
               </div>
             ))}
           </div>
-          {copy.draft ? (
-            <p className="dnote">
-              <b>Draft copy:</b> the brief does not spell out the 3 benefits (Q-14). This text is
-              built from the brief and must be confirmed by the client.
-            </p>
-          ) : null}
         </div>
       </section>
 
@@ -89,7 +86,7 @@ export default async function HomePage() {
         <div className="wrap">
           <p className="eyebrow">{home.audienceEyebrow}</p>
           <h2 id="who-h">{home.audienceHeadline}</h2>
-          <div className="grid c3">
+          <div className="grid c3 audiences">
             {home.audiences.map((audience) => (
               <div className="card" key={audience.title}>
                 <h3>{audience.title}</h3>

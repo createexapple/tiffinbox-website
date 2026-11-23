@@ -80,9 +80,8 @@ test.describe('placeholder WhatsApp state (number not supplied yet)', () => {
     await page.goto('/about');
     await expect(page.getByText('[WhatsApp number]').first()).toBeVisible();
     await expect(page.getByText('[order hours]').first()).toBeVisible();
-    await expect(page.getByText('logo', { exact: false }).first()).toBeVisible();
-    await expect(page.getByRole('img', { name: /Placeholder for client photo/ })).toBeVisible();
-    await expect(page.getByRole('img', { name: /Logo placeholder/ })).toBeVisible();
+    await expect(page.getByRole('img', { name: /Photo coming soon/ })).toBeVisible();
+    await expect(page.getByRole('img', { name: 'Tiffin Box logo' })).toBeVisible();
   });
 });
 
@@ -253,7 +252,12 @@ test.describe('content from the content layer', () => {
     await page.goto('/');
     await expect(page.locator('h1')).toHaveText('Bhook lagi? Khana hazir.');
     await expect(page.getByText('Ghar ka khana, Ammi ke pyaar jaisa').first()).toBeVisible();
-    await expect(page.locator('.chip')).toHaveText('Meals from Rs 300');
+    await expect(page.locator('.chip')).toHaveText([
+      'Meals from Rs 500, delivered',
+      'Try 3 days for Rs 4,800',
+    ]);
+    await expect(page.locator('.audiences .card')).toHaveCount(5);
+    await expect(page.getByText('Late night 11 PM – 1 AM').first()).toBeVisible();
     await expect(page.locator('.steps li')).toHaveCount(3);
   });
 
@@ -265,13 +269,67 @@ test.describe('content from the content layer', () => {
     await expect(page).toHaveURL(/\/customize$/);
   });
 
-  test('Plans shows four plans, one most popular, and the pricing rules', async ({ page }) => {
+  test('Plans shows five plans in order with tags, ranges and totals, then add-ons and who is eating', async ({
+    page,
+  }) => {
     await page.goto('/plans');
-    await expect(page.locator('article.plan')).toHaveCount(4);
+    await expect(page.locator('article.plan')).toHaveCount(5);
     await expect(page.locator('article.plan.popular')).toHaveCount(1);
-    await expect(page.getByText('Rs 4,200 a week')).toBeVisible();
+    await expect(page.locator('article.plan h3')).toHaveText([
+      'Starter',
+      'Budget',
+      'Student',
+      'Office Lunch',
+      'All 3 Meals',
+    ]);
+    await expect(page.locator('article.plan .badge-pop')).toHaveText([
+      'New',
+      'Cheapest',
+      '★ Most popular',
+    ]);
+    await expect(page.locator('article.plan .price')).toHaveText([
+      'Rs 800 per meal',
+      'Rs 500 per meal',
+      'Rs 750–800 per meal',
+      'Rs 750 per meal',
+      'Rs 2,100 per day',
+    ]);
+    await expect(page.locator('article.plan .weekly')).toHaveText([
+      'Rs 4,800 for 3 days',
+      'Rs 7,000 a week',
+      'Rs 10,850 a week',
+      'Rs 4,500 a week',
+      'Rs 14,700 a week',
+    ]);
+    await expect(page.locator('article.plan .incl')).toHaveText(Array(5).fill('Delivery included'));
+    await expect(page.getByText('Meals start at Rs 500, including Rs 150')).toBeVisible();
     await expect(page.getByText('Monthly saves 5%')).toBeVisible();
-    await expect(page.getByText('Rs 350 a day')).toBeVisible();
+    await expect(page.getByText('Rs 550 a day, delivery included')).toBeVisible();
+    const night = page.locator('.addon-card.dark');
+    await expect(night).toContainText('Late-night meal');
+    await expect(night).toContainText('Rs 900 a night, Rs 6,300 for 7 nights');
+    await expect(night.locator('svg')).toHaveCount(1);
+    await expect(page.getByRole('heading', { name: 'Who’s eating?' })).toBeVisible();
+    await expect(page.getByText('Student: Rs 775 a meal')).toBeVisible();
+    await expect(page.getByText('Rs 625 × 3 + Rs 150 = Rs 2,025 a meal')).toBeVisible();
+    await expect(page.getByText('4 × Chicken biryani Rs 700 + Rs 150 = Rs 2,950')).toBeVisible();
+    await expect(page.getByText(/Prices depend on our supplier/)).toBeVisible();
+  });
+
+  test('Menu has the late-night note and Customize shows the delivery line and example', async ({
+    page,
+  }) => {
+    await page.goto('/menu');
+    await expect(
+      page.getByText('Late-night meal (11 PM – 1 AM) is chosen from the dinner menu'),
+    ).toBeVisible();
+    await page.goto('/customize');
+    await expect(page.locator('h1')).toHaveText('Apni pasand ka khana.');
+    await expect(page.getByText('Rs 150 delivery is added to every custom order')).toBeVisible();
+    await expect(
+      page.getByText('Chicken qorma Rs 650 + raita Rs 80 + delivery Rs 150 = Rs 880.'),
+    ).toBeVisible();
+    await expect(page.getByText('(+Rs 100 late-night charge)')).toBeVisible();
   });
 
   test('Customize lists dishes with prices and add-ons', async ({ page }) => {
@@ -281,12 +339,58 @@ test.describe('content from the content layer', () => {
     await expect(page.getByText('Rs 750')).toBeVisible();
   });
 
-  test('How it works shows the delivery and skip table', async ({ page }) => {
+  test('How it works shows the delivery table with late night, family and guest rows', async ({
+    page,
+  }) => {
     await page.goto('/how-it-works');
+    await expect(page.locator('table thead th')).toHaveText([
+      'Meal',
+      'Delivered by',
+      'Skip before',
+      'Delivery charge',
+    ]);
     const rows = page.locator('table tbody tr');
-    await expect(rows).toHaveCount(3);
+    await expect(rows).toHaveCount(6);
     await expect(rows.nth(1)).toContainText('1 PM');
     await expect(rows.nth(1)).toContainText('10 AM the same day');
+    await expect(rows.nth(3)).toContainText('11 PM – 1 AM');
+    await expect(rows.nth(3)).toContainText('Rs 150 + Rs 100 late-night');
+    await expect(rows.nth(4)).toContainText('One Rs 150 for everyone at one address');
+    await expect(rows.nth(5)).toContainText('Order 1 day ahead');
+    await expect(page.getByText('Choose Starter, weekly or monthly')).toBeVisible();
+  });
+
+  test('About has the 12 FAQ entries, the story placeholder and late-night order hours', async ({
+    page,
+  }) => {
+    await page.goto('/about');
+    await expect(page.locator('.faq details')).toHaveCount(12);
+    await expect(page.getByText('[Our story — coming soon]')).toBeVisible();
+    await expect(page.getByText('late-night orders until 9 PM')).toBeVisible();
+  });
+
+  test('the footer shows the Urdu name, the Instagram link and a QR code, with no script', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    const footer = page.getByRole('contentinfo');
+    const urdu = footer.locator('[lang="ur"]');
+    await expect(urdu).toHaveText('ٹفن باکس');
+    await expect(urdu).toHaveAttribute('dir', 'rtl');
+    const qr = footer.getByRole('img', { name: 'QR code for Instagram @tiffinbox.lhr' });
+    await expect(qr).toBeVisible();
+    expect(await qr.evaluate((el) => el.tagName.toLowerCase())).toBe('svg');
+    const font = await urdu.evaluate((el) => getComputedStyle(el).fontFamily);
+    expect(font).toMatch(/Noto Nastaliq Urdu/i);
+  });
+
+  test('no public page shows a question code or a draft note', async ({ page }) => {
+    for (const path of ALL_PATHS) {
+      await page.goto(path);
+      const text = await page.locator('body').innerText();
+      expect(text, path).not.toMatch(/\bQ-\d+/);
+      expect(text, path).not.toMatch(/draft copy|replace before launch|placeholder, replace/i);
+    }
   });
 
   test('404 offers Home and the WhatsApp button', async ({ page }) => {
@@ -321,7 +425,7 @@ test.describe('SEO (NFR-04)', () => {
     await page.goto('/');
     await expect(page.locator('meta[name="description"]')).toHaveAttribute(
       'content',
-      /Meals from Rs 300/,
+      /Meals from Rs 500/,
     );
   });
 

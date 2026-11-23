@@ -11,6 +11,7 @@ import {
   getPricingRules,
   getSiteSettings,
 } from '@/content';
+import { BRAND_NAME_URDU } from '@/content/brand';
 import { isPlaceholder } from '@/lib/whatsapp';
 
 describe('content layer (mock source)', () => {
@@ -22,16 +23,30 @@ describe('content layer (mock source)', () => {
 
   it('seeds the brief reference data', async () => {
     const plans = await getPlans();
-    expect(plans.map((p) => p.name)).toEqual(['Budget', 'Student', 'Office Lunch', 'All 3 Meals']);
+    expect(plans.map((p) => p.name)).toEqual([
+      'Starter',
+      'Budget',
+      'Student',
+      'Office Lunch',
+      'All 3 Meals',
+    ]);
     expect(plans.filter((p) => p.mostPopular)).toHaveLength(1);
-    expect(plans.find((p) => p.name === 'Student')?.priceUnresolved).toBe(true);
+    expect(plans.map((p) => p.tag)).toEqual(['New', 'Cheapest', 'Most popular', '', '']);
+    expect(plans.find((p) => p.name === 'Student')?.price).toEqual({ from: 750, to: 800 });
+    expect(plans.find((p) => p.name === 'Starter')).toMatchObject({
+      weeklyPrice: 4800,
+      periodLabel: 'for 3 days',
+    });
+    expect(plans.every((p) => !p.priceUnresolved)).toBe(true);
     const rules = await getPricingRules();
     expect(rules.monthlySavingPercent).toBe(5);
-    expect(rules.breakfastAddOnPerDay).toBe(350);
+    expect(rules.breakfastAddOnPerDay).toBe(550);
+    expect(rules.deliveryCharge).toBe(150);
+    expect(rules.lateNight).toEqual({ mealPrice: 650, surcharge: 100 });
     expect(rules.teamDeal.minPeople).toBe(10);
     expect(await getCustomDishes()).toHaveLength(6);
     expect(await getAddOns()).toHaveLength(6);
-    expect((await getFaq()).length).toBeGreaterThan(0);
+    expect(await getFaq()).toHaveLength(12);
   });
 
   it('has a full seven-day menu week', async () => {
@@ -48,7 +63,7 @@ describe('content layer (mock source)', () => {
   });
 
   it('derives "Meals from" from the plans', async () => {
-    expect(await getMealsFromPrice()).toBe(300);
+    expect(await getMealsFromPrice()).toBe(500);
   });
 
   it('keeps unknown facts as placeholders, never invented values', async () => {
@@ -64,15 +79,32 @@ describe('content layer (mock source)', () => {
     expect(copy.home.headline).toBe('Bhook lagi? Khana hazir.');
     expect(copy.home.tagline).toBe('Ghar ka khana, Ammi ke pyaar jaisa');
     expect(copy.home.benefits).toHaveLength(3);
-    expect(copy.home.benefits[2]?.text).toContain('Meals from Rs 300');
-    expect(copy.home.benefits[0]?.text).toContain('Lunch by 1 PM, dinner by 8 PM');
-    expect(copy.steps.items[1]?.text).toContain('JazzCash, Easypaisa or bank transfer');
+    expect(copy.home.benefits[2]?.text).toBe(
+      'Meals from Rs 500 with door-to-door delivery included. Save 5% when you pay monthly.',
+    );
+    expect(copy.home.benefits[0]?.text).toBe(
+      'Lunch by 1 PM, dinner by 8 PM, late night 11 PM – 1 AM. Sealed tiffin boxes keep it hot and clean.',
+    );
+    expect(copy.home.tags).toEqual(['Meals from Rs 500, delivered', 'Try 3 days for Rs 4,800']);
+    expect(copy.steps.items[1]?.text).toBe(
+      'Choose Starter, weekly or monthly, and pay by JazzCash, Easypaisa or bank transfer.',
+    );
     expect(copy.howItWorks.skip).toContain('Up to 3 skips a week');
-    expect(copy.plansLede).toContain('Meals start at Rs 300');
+    expect(copy.plansLede).toBe(
+      'Meals start at Rs 500, including Rs 150 door-to-door delivery. Monthly plans save 5%. All prices in Pakistani Rupees.',
+    );
+    expect(copy.plansSub).toBe('Prices below are for one person and include delivery.');
   });
 
-  it('does not type the Urdu brand name anywhere in the copy', async () => {
+  it('does not type the Urdu brand name in the copy; it lives in the brand module', async () => {
     const copy = JSON.stringify(await getPageCopy());
     expect(copy).not.toMatch(/[؀-ۿ]/);
+    expect(BRAND_NAME_URDU).toBe('ٹفن باکس');
+  });
+
+  it('shows no question codes or draft notes anywhere in the page copy', async () => {
+    const copy = JSON.stringify(await getPageCopy());
+    expect(copy).not.toMatch(/\bQ-\d+/);
+    expect(copy).not.toMatch(/draft copy|replace before launch/i);
   });
 });

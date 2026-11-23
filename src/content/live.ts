@@ -59,6 +59,18 @@ function num(value: unknown, where: string): number {
   return value;
 }
 
+/** Optional text: a missing or non-string value is '' (fields added after the first published releases). */
+function optStr(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
+/** Optional whole number: a missing or invalid value is undefined (never throws). */
+function optInt(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isInteger(value) ? value : undefined;
+}
+
+/** Badge text for plans whose published document has no tag. */
+export const MOST_POPULAR_TAG = 'Most popular';
+
 const MEALS: readonly MealKey[] = ['breakfast', 'lunch', 'dinner'];
 const MEAL_LABEL: Record<MealKey, string> = {
   breakfast: 'Breakfast',
@@ -130,19 +142,34 @@ function mapPlans(raw: unknown): Plan[] {
   return arr(raw, 'plans').map((item, i) => {
     const p = obj(item, `plans[${i}]`);
     const unit = str(p.price_unit, `plans[${i}].price_unit`);
+    const unitPrice = int(p.unit_price, `plans[${i}].unit_price`);
+    // CR-004 fields are optional: an older published document has none of them.
+    const to = optInt(p.unit_price_to);
+    const mostPopular = p.is_most_popular === true;
+    const tag = optStr(p.tag).trim();
     return {
       id: str(p.id, `plans[${i}].id`),
       name: str(p.name, `plans[${i}].name`),
       audience: str(p.audience, `plans[${i}].audience`),
       includes: splitIncludes(str(p.meals_included, `plans[${i}].meals_included`)),
-      price: { from: int(p.unit_price, `plans[${i}].unit_price`) },
+      price: to !== undefined && to > unitPrice ? { from: unitPrice, to } : { from: unitPrice },
       priceUnit: unit === 'per_day' ? 'day' : 'meal',
       weeklyPrice: int(p.weekly_price, `plans[${i}].weekly_price`),
-      mostPopular: p.is_most_popular === true,
+      mostPopular,
+      tag: tag !== '' ? tag : mostPopular ? MOST_POPULAR_TAG : '',
+      periodLabel: optStr(p.period_label).trim(),
       // Publishing refuses an active plan without prices, so a released plan is never unresolved.
       priceUnresolved: false,
     };
   });
+}
+
+function lateNight(r: Json): PricingRules['lateNight'] {
+  const mealPrice = optInt(r.late_night_meal_price);
+  const surcharge = optInt(r.late_night_surcharge);
+  if (mealPrice === undefined || surcharge === undefined || mealPrice < 0 || surcharge < 0)
+    return null;
+  return { mealPrice, surcharge };
 }
 
 function mapPricingRules(raw: unknown): PricingRules {
@@ -154,6 +181,9 @@ function mapPricingRules(raw: unknown): PricingRules {
       minPeople: int(r.team_min_people, 'pricing_rules.team_min_people'),
       text: str(r.team_deal_text, 'pricing_rules.team_deal_text'),
     },
+    // CR-004 fields are optional: an older published document has none of them.
+    deliveryCharge: Math.max(0, optInt(r.delivery_charge) ?? 0),
+    lateNight: lateNight(r),
   };
 }
 

@@ -1,10 +1,10 @@
 /**
  * MOCK CONTENT (Stage 2). This is the ONLY file that holds sample data for the public site.
  *
- * Everything here is seeded from the client brief as recorded in docs/PRD.md ("Reference data from the
- * brief") and the approved prototype. It is unconfirmed: prices and menu are sample content until the
- * client confirms them (Q-07, Q-08, Q-26), and bracketed values are placeholders for facts we do not
- * have yet (Q-04 WhatsApp number, Q-06 order hours, Q-11 delivery boundary, Q-27 legal name/address).
+ * Everything here follows the client's "Full Spec to Match the App" of 23 Nov 2026 (change request CR-004), so
+ * this mock equals the content the operator applies with supabase/seed/03_app_spec_content.sql. Bracketed values
+ * are placeholders for facts the client has not supplied yet (WhatsApp number, order hours, delivery boundary,
+ * legal name and address).
  *
  * Stage 3 replaces `getContentSnapshot()` in ./index.ts with the Supabase-backed reader
  * (`get_public_content`, architecture sec. 5). Pages and components never import this file.
@@ -28,7 +28,7 @@ export const MOCK_CONTENT: ContentSnapshot = {
     areaServed: 'Johar Town, Lahore',
     areaServedDetail:
       'Johar Town, Lahore, including hostels, offices and homes around UMT. Other areas will be added later.',
-    deliveryBoundary: '[delivery area text, Q-11]',
+    deliveryBoundary: '[delivery boundary]',
     legalNameAndAddress: '[Business legal name / address]',
     meals: {
       breakfast: {
@@ -53,14 +53,29 @@ export const MOCK_CONTENT: ContentSnapshot = {
 
   plans: [
     {
+      id: 'plan-starter',
+      name: 'Starter',
+      audience: 'Try us for 3 days',
+      includes: ['Lunch + dinner', 'Full menu', '3 days'],
+      price: { from: 800 },
+      priceUnit: 'meal',
+      weeklyPrice: 4800,
+      mostPopular: false,
+      tag: 'New',
+      periodLabel: 'for 3 days',
+      priceUnresolved: false,
+    },
+    {
       id: 'plan-budget',
       name: 'Budget',
       audience: 'Hostel students',
       includes: ['Lunch + dinner', 'Daal or sabzi + 2 roti'],
-      price: { from: 300 },
+      price: { from: 500 },
       priceUnit: 'meal',
-      weeklyPrice: 4200,
+      weeklyPrice: 7000,
       mostPopular: false,
+      tag: 'Cheapest',
+      periodLabel: '',
       priceUnresolved: false,
     },
     {
@@ -68,22 +83,25 @@ export const MOCK_CONTENT: ContentSnapshot = {
       name: 'Student',
       audience: 'Students wanting the full menu',
       includes: ['Lunch + dinner', 'Full weekly menu'],
-      // The brief prints a range (Q-08). One confirmed figure is needed before launch, so this plan is flagged.
-      price: { from: 550, to: 600 },
+      price: { from: 750, to: 800 },
       priceUnit: 'meal',
-      weeklyPrice: 8050,
+      weeklyPrice: 10850,
       mostPopular: true,
-      priceUnresolved: true,
+      tag: 'Most popular',
+      periodLabel: '',
+      priceUnresolved: false,
     },
     {
       id: 'plan-office',
       name: 'Office Lunch',
       audience: 'Offices and working people',
       includes: ['Lunch only, Mon–Sat', 'Delivered by 1 PM'],
-      price: { from: 550 },
+      price: { from: 750 },
       priceUnit: 'meal',
-      weeklyPrice: 3300,
+      weeklyPrice: 4500,
       mostPopular: false,
+      tag: '',
+      periodLabel: '',
       priceUnresolved: false,
     },
     {
@@ -91,18 +109,22 @@ export const MOCK_CONTENT: ContentSnapshot = {
       name: 'All 3 Meals',
       audience: 'People who don’t cook at all',
       includes: ['Breakfast + lunch + dinner'],
-      price: { from: 1500 },
+      price: { from: 2100 },
       priceUnit: 'day',
-      weeklyPrice: 10500,
+      weeklyPrice: 14700,
       mostPopular: false,
+      tag: '',
+      periodLabel: '',
       priceUnresolved: false,
     },
   ],
 
   pricingRules: {
     monthlySavingPercent: 5,
-    breakfastAddOnPerDay: 350,
+    breakfastAddOnPerDay: 550,
     teamDeal: { minPeople: 10, text: 'a team discount and one monthly invoice' },
+    deliveryCharge: 150,
+    lateNight: { mealPrice: 650, surcharge: 100 },
   },
 
   // Sample week from the brief. Dates are Asia/Karachi calendar dates.
@@ -180,29 +202,55 @@ export const MOCK_CONTENT: ContentSnapshot = {
     {
       id: 'faq-where',
       question: 'Where do you deliver?',
-      answer:
-        'Johar Town, Lahore, including hostels and offices around UMT. More areas are coming soon.',
+      answer: 'Johar Town, Lahore, including hostels and offices around UMT. More areas soon.',
     },
     {
       id: 'faq-when',
       question: 'When does food arrive?',
-      answer: 'Breakfast by 8 AM, lunch by 1 PM and dinner by 8 PM.',
+      answer: 'Breakfast by 8 AM, lunch by 1 PM, dinner by 8 PM, late night 11 PM – 1 AM.',
+    },
+    {
+      id: 'faq-delivery',
+      question: 'Why is there a delivery charge?',
+      answer:
+        'We bring every meal door to door. Rs 150 per delivery is already included in plan prices.',
+    },
+    {
+      id: 'faq-try',
+      question: 'Can I try before a full week?',
+      answer: 'Yes. The Starter plan is 3 days of lunch and dinner for Rs 4,800.',
+    },
+    {
+      id: 'faq-family',
+      question: 'Can I order for my family?',
+      answer:
+        'Yes. Everyone at one address shares one Rs 150 delivery; each extra person pays the meal price only.',
+    },
+    {
+      id: 'faq-guests',
+      question: 'Guests are coming. Can you cater?',
+      answer:
+        'Yes. Order 1 day ahead, pick dishes from the Customize list, and pay one Rs 150 delivery.',
+    },
+    {
+      id: 'faq-late',
+      question: 'Do you deliver late at night?',
+      answer: 'Yes, 11 PM to 1 AM, Rs 900 a night. Order before 9 PM.',
     },
     {
       id: 'faq-change',
       question: "Can I change a dish I don't like?",
-      answer: 'Yes. Swap it for any dish on our Customize list; custom dishes cost a little more.',
+      answer: 'Yes. Swap it for any dish on the Customize list; Rs 150 delivery is added.',
     },
     {
       id: 'faq-home',
       question: 'What if I go home for a few days?',
-      answer:
-        'Skip up to 3 meals a week, or pause your plan on WhatsApp. Skipped meals are added to the end of your plan.',
+      answer: 'Skip up to 3 meals a week, or pause your plan on WhatsApp.',
     },
     {
       id: 'faq-pay',
       question: 'How do I pay?',
-      answer: 'JazzCash, Easypaisa or bank transfer, before your week or month starts.',
+      answer: 'JazzCash, Easypaisa or bank transfer, before your days start.',
     },
     {
       id: 'faq-office',

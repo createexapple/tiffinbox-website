@@ -2,8 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { NoteBox } from '@/components/public/NoteBox';
 import { Steps } from '@/components/public/Steps';
-import { getPageCopy, getSiteSettings } from '@/content';
-import { skipRows } from '@/content/copy';
+import { getPageCopy } from '@/content';
 import { pageMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = pageMetadata({
@@ -14,7 +13,7 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default async function HowItWorksPage() {
-  const [copy, settings] = await Promise.all([getPageCopy(), getSiteSettings()]);
+  const copy = await getPageCopy();
   const { howItWorks: how, steps } = copy;
 
   return (
@@ -31,22 +30,26 @@ export default async function HowItWorksPage() {
 
       <section className="section alt">
         <div className="wrap narrow centered">
-          <h2>Delivery times and skipping</h2>
-          <table className="rt">
-            <caption className="sr-only">Delivery time and skip cut-off for each meal</caption>
+          <h2>Delivery times and charges</h2>
+          <table className="rt delivery-table">
+            <caption className="sr-only">
+              Delivery time, skip cut-off and delivery charge for each kind of order
+            </caption>
             <thead>
               <tr>
                 <th scope="col">Meal</th>
                 <th scope="col">Delivered by</th>
                 <th scope="col">Skip before</th>
+                <th scope="col">Delivery charge</th>
               </tr>
             </thead>
             <tbody>
-              {skipRows(settings).map((row) => (
+              {how.deliveryRows.map((row) => (
                 <tr key={row.key}>
-                  <th scope="row">{row.label}</th>
+                  <th scope="row">{row.meal}</th>
                   <td data-label="Delivered by">{row.deliveredBy}</td>
                   <td data-label="Skip before">{row.skipBefore}</td>
+                  <td data-label="Delivery charge">{row.charge}</td>
                 </tr>
               ))}
             </tbody>

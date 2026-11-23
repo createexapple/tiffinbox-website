@@ -14,7 +14,7 @@ export interface MealTiming {
   skipCutoff: { time: string; day: 'night_before' | 'same_day' };
 }
 
-/** FR-20 site settings. Bracketed values such as "[WhatsApp number]" are placeholders (Q-04, Q-06, Q-11, Q-27). */
+/** FR-20 site settings. Bracketed values such as "[WhatsApp number]" are placeholders for facts the client has not supplied. */
 export interface SiteSettings {
   businessName: string;
   tagline: string;
@@ -32,7 +32,7 @@ export interface SiteSettings {
 
 export interface PriceSpec {
   from: number;
-  /** Set only while the brief's range is unresolved (Q-08). */
+  /** Upper end of a per-meal price range (Student: Rs 750 to 800). Absent for a single price. */
   to?: number;
 }
 
@@ -44,9 +44,14 @@ export interface Plan {
   includes: string[];
   price: PriceSpec;
   priceUnit: 'meal' | 'day';
+  /** Total for the plan's period: a week, unless `periodLabel` says otherwise (Starter: "for 3 days"). */
   weeklyPrice: number;
   mostPopular: boolean;
-  /** True while the figure is ambiguous and needs one confirmed price from the client (Q-08). FR-07: must not go live like this. */
+  /** Badge text such as "New" or "Cheapest" (CR-004). Falls back to "Most popular" for the most popular plan; '' = no badge. */
+  tag: string;
+  /** What `weeklyPrice` covers when it is not a week, e.g. "for 3 days". '' means "a week". */
+  periodLabel: string;
+  /** Always false for published content (publishing refuses an unpriced plan). Kept for the mock and older callers. */
   priceUnresolved: boolean;
 }
 
@@ -55,6 +60,10 @@ export interface PricingRules {
   monthlySavingPercent: number;
   breakfastAddOnPerDay: number;
   teamDeal: { minPeople: number; text: string };
+  /** Door-to-door delivery per order (CR-004). 0 when the published document predates the field. */
+  deliveryCharge: number;
+  /** Late-night meal (CR-004): meal price and late-night surcharge. Null when the document predates the field. */
+  lateNight: { mealPrice: number; surcharge: number } | null;
 }
 
 export interface MenuDay {
@@ -152,12 +161,35 @@ export interface Step {
   title: string;
   text: string;
 }
+/** One row of the How it works delivery table. */
+export interface DeliveryRow {
+  key: string;
+  meal: string;
+  deliveredBy: string;
+  skipBefore: string;
+  charge: string;
+}
+/** A card in the Plans page "add-ons" strip. `dark` is the late-night card (moon icon). */
+export interface AddOnCard {
+  key: 'late-night' | 'breakfast' | 'team' | 'monthly';
+  title: string;
+  text: string;
+  dark?: boolean;
+}
+/** One "Who's eating?" option. `example` is null when the data needed for the worked example is missing. */
+export interface ServingOption {
+  title: string;
+  how: string;
+  example: string | null;
+}
 export interface PageCopy {
   home: {
     eyebrow: string;
     headline: string;
     tagline: string;
     lede: string;
+    /** Gold tags under the lede ("Meals from Rs 500, delivered", "Try 3 days for Rs 4,800"). */
+    tags: string[];
     benefitsEyebrow: string;
     benefitsHeadline: string;
     benefits: Benefit[];
@@ -169,14 +201,32 @@ export interface PageCopy {
   };
   steps: { eyebrow: string; headline: string; items: Step[] };
   menuIntro: string;
+  /** Under the menu table; null when the data has no late-night prices. */
+  menuLateNightNote: string | null;
   planNote: string;
   plansLede: string;
+  plansSub: string;
+  planAddOns: AddOnCard[];
+  servingEyebrow: string;
+  servingHeadline: string;
+  servingOptions: ServingOption[];
   customizeIntro: string;
-  about: { headline: string; mission: string; story: string };
+  /** "Chicken qorma Rs 650 + raita Rs 80 + delivery Rs 150 = Rs 880." Null when there is no dish to show. */
+  customizeExample: string | null;
+  customizeLateNight: string | null;
+  about: {
+    headline: string;
+    mission: string;
+    /** Honest placeholder until the client supplies the story. */
+    story: string;
+    storyIsPlaceholder: boolean;
+    contactLateNight: string | null;
+  };
   howItWorks: {
     headline: string;
     lede: string;
     weeklyMenuLine: string;
+    deliveryRows: DeliveryRow[];
     skip: string;
     pause: string;
     packaging: string;
@@ -184,6 +234,4 @@ export interface PageCopy {
     paymentPoints: { label: string; text: string }[];
   };
   priceDisclaimer: string;
-  /** True while this copy is a draft awaiting client confirmation (Q-14, AS-05). */
-  draft: boolean;
 }

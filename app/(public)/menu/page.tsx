@@ -52,6 +52,7 @@ export default async function MenuPage() {
             )}
             <p className={current ? undefined : 'mt-5'}>{copy.menuIntro}</p>
             <MenuTable week={week} settings={settings} />
+            {copy.menuLateNightNote ? <p className="mt-4">{copy.menuLateNightNote}</p> : null}
           </>
         ) : (
           <>

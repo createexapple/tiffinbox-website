@@ -42,7 +42,7 @@ export async function getPlans(): Promise<Plan[]> {
   return (await getContentSnapshot()).plans;
 }
 
-/** FR-16 pricing rules: monthly saving, breakfast add-on, team deal. */
+/** FR-16 pricing rules: monthly saving, breakfast add-on, team deal, delivery charge, late-night prices. */
 export async function getPricingRules(): Promise<PricingRules> {
   return (await getContentSnapshot()).pricingRules;
 }
@@ -78,10 +78,13 @@ export async function getMealsFromPrice(): Promise<number | null> {
 
 /** Static page copy, filled in from settings, pricing rules and plans. */
 export async function getPageCopy(): Promise<PageCopy> {
-  const { settings, pricingRules, plans } = await getContentSnapshot();
+  const { settings, pricingRules, plans, customDishes, addOns } = await getContentSnapshot();
   return buildPageCopy({
     settings,
     rules: pricingRules,
     mealsFrom: lowestMealPrice(plans),
+    plans,
+    dishes: customDishes,
+    addOns,
   });
 }

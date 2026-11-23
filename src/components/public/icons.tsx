@@ -27,3 +27,11 @@ export function WarnIcon({ className = 'ico' }: IconProps) {
     </svg>
   );
 }
+
+export function MoonIcon({ className = 'ico' }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z" />
+    </svg>
+  );
+}

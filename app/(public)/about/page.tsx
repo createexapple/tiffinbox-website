@@ -5,6 +5,7 @@ import { PagePhoto } from '@/components/public/PagePhoto';
 import { WhatsAppButton } from '@/components/public/WhatsAppButton';
 import { InstagramIcon } from '@/components/public/icons';
 import { getFaq, getPageCopy, getPageImages, getSiteSettings } from '@/content';
+import { stripQuestionCodes } from '@/lib/format';
 import { pageMetadata } from '@/lib/seo';
 import { buildWhatsAppLink, instagramUrl, isPlaceholder } from '@/lib/whatsapp';
 
@@ -33,10 +34,8 @@ export default async function AboutPage() {
             <p className="eyebrow">About us</p>
             <h1 className="h1-page">{about.headline}</h1>
             <p className="lede">{about.mission}</p>
-            <div className="dnote">
-              <b>Our story:</b> {about.story}. The paragraph above is the brief’s mission statement,
-              not the story.
-            </div>
+            <h2 className="h2-sub">Our story</h2>
+            <p className={about.storyIsPlaceholder ? 'muted' : undefined}>{about.story}</p>
           </div>
           <PagePhoto
             image={pageImages.aboutMain}
@@ -51,7 +50,9 @@ export default async function AboutPage() {
             <h2>Where we deliver</h2>
             <p>{settings.areaServedDetail}</p>
             {isPlaceholder(settings.deliveryBoundary) ? (
-              <p className="small muted">Exact boundary: {settings.deliveryBoundary}</p>
+              <p className="small muted">
+                Exact boundary: {stripQuestionCodes(settings.deliveryBoundary)}
+              </p>
             ) : (
               <p className="small muted">{settings.deliveryBoundary}</p>
             )}
@@ -61,15 +62,7 @@ export default async function AboutPage() {
             <ul className="contact-list">
               <li>
                 <b>WhatsApp (orders)</b>
-                <span>
-                  {settings.whatsappNumber}
-                  {isPlaceholder(settings.whatsappNumber) ? (
-                    <>
-                      {' '}
-                      <span className="tag">Q-04</span>
-                    </>
-                  ) : null}
-                </span>
+                <span>{stripQuestionCodes(settings.whatsappNumber)}</span>
               </li>
               <li>
                 <b>Instagram</b>
@@ -86,13 +79,8 @@ export default async function AboutPage() {
               <li>
                 <b>Order hours</b>
                 <span>
-                  {settings.orderHours}
-                  {isPlaceholder(settings.orderHours) ? (
-                    <>
-                      {' '}
-                      <span className="tag">Q-06</span>
-                    </>
-                  ) : null}
+                  {stripQuestionCodes(settings.orderHours)}
+                  {about.contactLateNight ? `; ${about.contactLateNight}` : ''}
                 </span>
               </li>
               <li>

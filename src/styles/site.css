@@ -1037,3 +1037,108 @@ button.btn-wa {
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------- CR-004: app-spec content ---------- */
+.mt-4 {
+  margin-top: var(--sp-4);
+}
+.chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+/* Five plans: one column on phones, two on tablets, three on desktop (3 + 2). */
+.plans-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 48em) {
+  .plans-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 64em) {
+  .plans-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.plan .incl {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+.addon-card {
+  background: var(--green-100);
+  color: var(--ink-900);
+  border-radius: var(--r-md);
+  padding: var(--sp-4) var(--sp-5);
+}
+.addon-card h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--green-800);
+  font-size: var(--fs-lg);
+  margin-bottom: var(--sp-1);
+}
+.addon-card p {
+  margin: 0;
+}
+.addon-card.dark {
+  background: var(--green-900);
+  color: var(--on-brand-band);
+}
+.addon-card.dark h3 {
+  color: var(--on-brand-band);
+}
+.addon-card .moon {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: var(--gold-500);
+  flex: none;
+}
+.serve .example {
+  margin-top: var(--sp-3);
+  font-weight: 600;
+}
+.delivery-table td,
+.delivery-table tbody th {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 47.99em) {
+  .delivery-table td::before {
+    flex-basis: 7.5rem;
+  }
+}
+.footer-logo {
+  display: block;
+  height: 4rem;
+  width: auto;
+  max-width: 12rem;
+  margin-bottom: var(--sp-3);
+  object-fit: contain;
+}
+.footer-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+.urdu-name {
+  font-family: var(--font-urdu), 'Noto Nastaliq Urdu', serif;
+  font-weight: 400;
+  font-size: 1.5rem;
+  line-height: 2;
+  color: var(--on-brand-band-accent);
+}
+.qr-box {
+  margin-top: var(--sp-3);
+}
+.qr-box p {
+  margin: var(--sp-2) 0 0;
+}
+.qr {
+  display: block;
+  width: 8.5rem;
+  height: 8.5rem;
+  border-radius: var(--r-sm);
+}

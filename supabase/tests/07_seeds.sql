@@ -54,3 +54,33 @@ select tt.is((select live_menu_week_start from app.dashboard_overview_at('2026-1
 select tt.is((select count(*) from app.menu_week_status_at('2026-11-22 19:00+05') where status = 'scheduled' and differs_from_released), 0::bigint, 'seed: the scheduled week''s snapshot equals its working copy');
 select tt.is((select differs_from_released from app.menu_week_status_at('2026-11-23 12:00+05') where week_start = '2026-11-23'), true, 'sample: the live week has one pending edit (Friday dinner), like the Stage 2 sample');
 select tt.as_postgres();
+
+-- seed 03 (CR-004): the 23 Nov 2026 app spec applied on top of seeds 01 and 02 (appended last so the assertions above keep their state)
+create temp table s_before on commit drop as select to_jsonb(s) as j from public.site_settings s;
+create temp table menu_before on commit drop as select count(*) as n from public.menu_slots;
+\i :ROOT/supabase/seed/03_app_spec_content.sql
+select tt.is((select count(*) from public.plans where is_active), 5::bigint, 'app-spec seed: 5 active plans');
+select tt.is((select name from public.plans order by sort_order, id limit 1), 'Starter', 'app-spec seed: Starter is first');
+select tt.is((select tag || '/' || period_label from public.plans where name = 'Starter'), 'New/for 3 days', 'app-spec seed: Starter has the New tag and the "for 3 days" period');
+select tt.is((select unit_price || '-' || unit_price_to from public.plans where name = 'Student'), '750-800', 'app-spec seed: Student is the range 750-800');
+select tt.is((select weekly_price from public.plans where name = 'Student'), 10850, 'app-spec seed: Student weekly price 10,850');
+select tt.is((select price_note from public.plans where name = 'Student'), '', 'app-spec seed: the old Student price note is cleared');
+select tt.is((select count(*) from public.plans where is_most_popular), 1::bigint, 'app-spec seed: exactly one most-popular plan');
+select tt.is((select count(*) from public.faq_entries where not is_hidden), 12::bigint, 'app-spec seed: 12 FAQ entries');
+select tt.is((select question from public.faq_entries order by sort_order limit 1 offset 2), 'Why is there a delivery charge?', 'app-spec seed: the FAQ follows the spec order');
+select tt.is((select breakfast_addon_price || '/' || delivery_charge || '/' || late_night_meal_price || '/' || late_night_surcharge from public.pricing_rules), '550/150/650/100', 'app-spec seed: breakfast 550, delivery 150, late-night meal 650 plus 100');
+select tt.is((select count(*) from public.dishes), 6::bigint, 'app-spec seed leaves the 6 dishes alone');
+select tt.is((select to_jsonb(s) from public.site_settings s), (select j from s_before), 'app-spec seed leaves every site setting alone (no invented WhatsApp number, hours, name, boundary)');
+select tt.is((select count(*) from public.content_releases), 1::bigint, 'app-spec seed publishes nothing');
+select tt.is((public.get_public_content() #>> '{plans,0,name}'), 'Budget', 'app-spec seed: visitors still see the old release until a publish');
+select tt.is((app.build_content_document() #>> '{plans,0,tag}'), 'New', 'draft document carries the plan tag');
+select tt.is((app.build_content_document() #>> '{plans,2,unit_price_to}')::int, 800, 'draft document carries the price range end');
+select tt.is((app.build_content_document() #>> '{plans,0,period_label}'), 'for 3 days', 'draft document carries the period label');
+select tt.is((app.build_content_document() #>> '{pricing_rules,late_night_meal_price}')::int, 650, 'draft document carries the late-night meal price');
+select tt.is((app.build_content_document() #>> '{pricing_rules,delivery_charge}')::int, 150, 'draft document carries the delivery charge');
+select tt.throws('update public.plans set unit_price_to = unit_price where name = ''Student''', '23514', 'a price range end must be above the start');
+-- idempotent
+\i :ROOT/supabase/seed/03_app_spec_content.sql
+select tt.is((select count(*) from public.plans), 5::bigint, 'app-spec seed is idempotent (plans)');
+select tt.is((select count(*) from public.faq_entries), 12::bigint, 'app-spec seed is idempotent (faq)');
+select tt.is((select count(*) from public.menu_slots), (select n from menu_before), 'app-spec seed leaves the menu alone');

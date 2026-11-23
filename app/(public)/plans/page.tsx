@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { NoteBox } from '@/components/public/NoteBox';
+import { AddOnCard } from '@/components/public/AddOnCard';
 import { PlanCard } from '@/components/public/PlanCard';
 import { getMealsFromPrice, getPageCopy, getPlans, getPricingRules } from '@/content';
 import { formatRs } from '@/lib/format';
@@ -35,6 +35,7 @@ export default async function PlansPage() {
         <p className="eyebrow">Plans &amp; pricing</p>
         <h1 className="h1-page">Apna plan chunein.</h1>
         <p className="lede">{copy.plansLede}</p>
+        <p className="muted">{copy.plansSub}</p>
 
         {plans.length === 0 ? (
           <div className="note-box mt-6">
@@ -44,25 +45,37 @@ export default async function PlansPage() {
             </p>
           </div>
         ) : (
-          <div className="grid c4 mt-6">
+          <div className="grid plans-grid mt-6">
             {plans.map((plan) => (
-              <PlanCard key={plan.id} plan={plan} />
+              <PlanCard key={plan.id} plan={plan} deliveryIncluded={rules.deliveryCharge > 0} />
             ))}
           </div>
         )}
 
-        <div className="grid c3 mt-6">
-          <NoteBox title={`Monthly saves ${rules.monthlySavingPercent}%`}>
-            Pay monthly, before the month starts, and save {rules.monthlySavingPercent}% compared
-            with paying weekly.
-          </NoteBox>
-          <NoteBox title="Office team deal">
-            Offices with {rules.teamDeal.minPeople} or more people get {rules.teamDeal.text}.
-          </NoteBox>
-          <NoteBox title="Add breakfast">
-            Breakfast can be added to any plan for {formatRs(rules.breakfastAddOnPerDay)} a day.
-          </NoteBox>
+        <div className="grid c2 mt-6">
+          {copy.planAddOns.map((card) => (
+            <AddOnCard key={card.key} card={card} />
+          ))}
         </div>
+
+        <section className="mt-8" aria-labelledby="serving-h">
+          <p className="eyebrow">{copy.servingEyebrow}</p>
+          <h2 id="serving-h">{copy.servingHeadline}</h2>
+          <div className="grid c3 mt-4">
+            {copy.servingOptions.map((option) => (
+              <article className="note-box serve" key={option.title}>
+                <h3>{option.title}</h3>
+                <p>{option.how}</p>
+                {option.example ? (
+                  <p className="example">
+                    <b>Example:</b> {option.example}
+                  </p>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        </section>
+
         <p className="muted mt-5">{copy.priceDisclaimer}</p>
         <div className="cta-row">
           <Link className="btn btn-secondary btn-lg" href="/customize">

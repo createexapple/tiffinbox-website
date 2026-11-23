@@ -8,6 +8,7 @@ import {
   getSiteSettings,
 } from '@/content';
 import { publicMediaUrl } from '@/lib/media-url';
+import { stripQuestionCodes } from '@/lib/format';
 import { buildWhatsAppLink, isPlaceholder } from '@/lib/whatsapp';
 import { ContentUnavailable } from './ContentUnavailable';
 import { MockBanner } from './MockBanner';
@@ -65,14 +66,16 @@ export async function PublicShell({
       <SiteHeader businessName={settings.businessName} logoUrl={logoUrl} />
       <main id="main">{children}</main>
       <OrderEnd link={link} headline={copy.home.orderHeadline} line={copy.home.orderLine} />
-      <SiteFooter settings={settings} />
+      <SiteFooter settings={settings} logoUrl={logoUrl} />
       <WhatsAppButton link={link} variant="fab" ariaLabel="WhatsApp: start an order">
         WhatsApp
       </WhatsAppButton>
       {link.ready ? null : (
         <WhatsAppNote
           placeholder={
-            isPlaceholder(settings.whatsappNumber) ? settings.whatsappNumber : '[WhatsApp number]'
+            isPlaceholder(settings.whatsappNumber)
+              ? stripQuestionCodes(settings.whatsappNumber)
+              : '[WhatsApp number]'
           }
         />
       )}

@@ -95,3 +95,14 @@ export function formatTime12h(hhmm: string): string {
   const hour12 = hours % 12 === 0 ? 12 : hours % 12;
   return minutes === '00' ? `${hour12} ${suffix}` : `${hour12}:${minutes} ${suffix}`;
 }
+
+/**
+ * Public pages never show question codes. A placeholder saved in settings may still carry one
+ * ("[delivery area text, Q-11]"); this removes it for display only ("[delivery area text]").
+ */
+export function stripQuestionCodes(text: string): string {
+  return text
+    .replace(/\s*[,;(]?\s*\bQ-\d+\b\)?/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}

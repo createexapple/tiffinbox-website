@@ -65,6 +65,15 @@ export default async function CustomizePage() {
           </div>
         )}
 
+        {copy.customizeExample || copy.customizeLateNight ? (
+          <div className="mt-6 stack">
+            {copy.customizeExample ? (
+              <NoteBox title="Example total">{copy.customizeExample}</NoteBox>
+            ) : null}
+            {copy.customizeLateNight ? <p>{copy.customizeLateNight}</p> : null}
+          </div>
+        ) : null}
+
         <div className="cta-row">
           <Link className="btn btn-secondary btn-lg" href="/menu">
             Back to this week’s menu
