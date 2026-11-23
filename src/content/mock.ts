@@ -107,7 +107,7 @@ export const MOCK_CONTENT: ContentSnapshot = {
     {
       id: 'plan-all3',
       name: 'All 3 Meals',
-      audience: 'People who don’t cook at all',
+      audience: "People who don't cook at all",
       includes: ['Breakfast + lunch + dinner'],
       price: { from: 2100 },
       priceUnit: 'day',
@@ -260,7 +260,7 @@ export const MOCK_CONTENT: ContentSnapshot = {
     {
       id: 'faq-start',
       question: 'How do I start?',
-      answer: 'Send “HI” on WhatsApp. Your first meal can arrive the next day.',
+      answer: 'Send "HI" on WhatsApp. Your first meal can arrive the next day.',
     },
   ],
 };

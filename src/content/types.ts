@@ -154,8 +154,9 @@ export interface Benefit {
 }
 export interface Audience {
   title: string;
-  problem: string;
-  offer: string;
+  text: string;
+  /** The late-night card is dark. */
+  dark?: boolean;
 }
 export interface Step {
   title: string;
@@ -169,26 +170,24 @@ export interface DeliveryRow {
   skipBefore: string;
   charge: string;
 }
-/** A card in the Plans page "add-ons" strip. `dark` is the late-night card (moon icon). */
+/** A card in the Plans page add-on strip. `dark` is the late-night card (moon icon, full width, price line). */
 export interface AddOnCard {
   key: 'late-night' | 'breakfast' | 'team' | 'monthly';
   title: string;
   text: string;
   dark?: boolean;
-}
-/** One "Who's eating?" option. `example` is null when the data needed for the worked example is missing. */
-export interface ServingOption {
-  title: string;
-  how: string;
-  example: string | null;
+  /** Price line of the late-night card ("Rs 900 a night"). */
+  price?: string;
 }
 export interface PageCopy {
   home: {
     eyebrow: string;
+    /** "Bhook lagi?" and, on its own line in brown, "Khana hazir.". */
     headline: string;
+    headlineAccent: string;
     tagline: string;
     lede: string;
-    /** Gold tags under the lede ("Meals from Rs 500, delivered", "Try 3 days for Rs 4,800"). */
+    /** Gold tags under the lede ("Meals from Rs 500, delivered", "Try 3 days for Rs 4,800"); the first is filled, the rest outlined. */
     tags: string[];
     benefitsEyebrow: string;
     benefitsHeadline: string;
@@ -199,39 +198,33 @@ export interface PageCopy {
     orderHeadline: string;
     orderLine: string;
   };
-  steps: { eyebrow: string; headline: string; items: Step[] };
-  menuIntro: string;
-  /** Under the menu table; null when the data has no late-night prices. */
-  menuLateNightNote: string | null;
-  planNote: string;
+  steps: { eyebrow: string; headline: string; items: Step[]; linkText: string };
+  menu: {
+    eyebrow: string;
+    intro: string;
+    /** Under the day cards; '' when there is nothing to say. */
+    note: string;
+    customizeLink: string;
+  };
   plansLede: string;
-  plansSub: string;
   planAddOns: AddOnCard[];
-  servingEyebrow: string;
-  servingHeadline: string;
-  servingOptions: ServingOption[];
+  /** Shown under the plans when the "Who's eating?" calculator cannot be built from the data. */
+  priceDisclaimer: string;
   customizeIntro: string;
-  /** "Chicken qorma Rs 650 + raita Rs 80 + delivery Rs 150 = Rs 880." Null when there is no dish to show. */
-  customizeExample: string | null;
   customizeLateNight: string | null;
   about: {
     headline: string;
     mission: string;
-    /** Honest placeholder until the client supplies the story. */
-    story: string;
-    storyIsPlaceholder: boolean;
+    whereWeDeliver: string;
     contactLateNight: string | null;
   };
   howItWorks: {
     headline: string;
-    lede: string;
-    weeklyMenuLine: string;
+    steps: Step[];
     deliveryRows: DeliveryRow[];
     skip: string;
     pause: string;
     packaging: string;
-    paymentIntro: string;
-    paymentPoints: { label: string; text: string }[];
+    payment: string;
   };
-  priceDisclaimer: string;
 }

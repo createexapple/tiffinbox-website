@@ -28,14 +28,14 @@ export function InstagramQr({ url, label }: { url: string; label: string }) {
   const total = size + QUIET_ZONE * 2;
   return (
     <svg
-      className="qr"
+      className="t-qr-svg"
       viewBox={`0 0 ${total} ${total}`}
       role="img"
       aria-label={label}
       shapeRendering="crispEdges"
     >
       <rect width={total} height={total} fill="#ffffff" />
-      <path d={path} fill="#163d27" />
+      <path d={path} fill="#17201A" />
     </svg>
   );
 }

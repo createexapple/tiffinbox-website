@@ -78,13 +78,11 @@ export async function getMealsFromPrice(): Promise<number | null> {
 
 /** Static page copy, filled in from settings, pricing rules and plans. */
 export async function getPageCopy(): Promise<PageCopy> {
-  const { settings, pricingRules, plans, customDishes, addOns } = await getContentSnapshot();
+  const { settings, pricingRules, plans } = await getContentSnapshot();
   return buildPageCopy({
     settings,
     rules: pricingRules,
     mealsFrom: lowestMealPrice(plans),
     plans,
-    dishes: customDishes,
-    addOns,
   });
 }

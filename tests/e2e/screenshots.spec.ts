@@ -12,7 +12,7 @@ const SIZES = [
   { name: 'desktop', width: 1280, height: 800 },
 ] as const;
 
-const slug = (path: string) => (path === '/' ? 'home' : path.replace(/^\//, ''));
+const slug = (path: string) => (path === '/' ? 'home' : path.replace(/^\/#?/, ''));
 
 for (const size of SIZES) {
   test.describe(size.name, () => {

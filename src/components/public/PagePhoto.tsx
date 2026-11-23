@@ -1,28 +1,23 @@
 import type { PublicImage } from '@/content';
 import { publicMediaUrl } from '@/lib/media-url';
-import { PhotoPlaceholder } from './PhotoPlaceholder';
 
 /**
- * A photo slot on a public page (FR-21): the published photo when one is assigned, otherwise the labelled
- * placeholder. The frame keeps the same aspect ratio either way, so there is no layout shift.
+ * A photo on a public page (FR-21), rendered only when one is assigned in the admin. No placeholder box: pages
+ * look complete without a photo.
  */
 export function PagePhoto({
   image,
-  description,
   shape = 'photo',
   className,
   priority = false,
 }: {
   image: PublicImage | null;
-  description: string;
   shape?: 'photo' | 'wide';
   className?: string;
   priority?: boolean;
 }) {
   const url = image ? publicMediaUrl(image.path) : null;
-  if (!image || !url) {
-    return <PhotoPlaceholder description={description} shape={shape} className={className} />;
-  }
+  if (!image || !url) return null;
   return (
     <div className={`page-photo ${shape}${className ? ` ${className}` : ''}`}>
       {/* Plain <img>: the file is already resized and re-encoded by the upload pipeline. */}

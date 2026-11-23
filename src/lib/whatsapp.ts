@@ -5,7 +5,8 @@
  */
 
 export const WHATSAPP_NOTE_ID = 'wa-note';
-export const DEFAULT_MESSAGE = 'HI';
+/** Prefilled text of the generic WhatsApp buttons (the design's wording). */
+export const DEFAULT_MESSAGE = 'HI Tiffin Box, I want to order.';
 
 export type WhatsAppLink =
   { ready: true; href: string } | { ready: false; href: `#${typeof WHATSAPP_NOTE_ID}` };
@@ -31,10 +32,39 @@ export function normaliseWhatsAppNumber(raw: string): string | null {
   return /^\d{8,15}$/.test(digits) ? digits : null;
 }
 
+/** Longest prefilled message we build (characters, after cleaning). Longer text is cut. */
+export const MAX_MESSAGE_LENGTH = 500;
+
+/** Plain text only: control characters and line breaks become spaces, runs of spaces collapse, length is capped. */
+export function cleanMessage(message: string): string {
+  const plain = message
+    .replace(/[\u0000-\u001f\u007f\u2028\u2029]+/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  return plain.length > MAX_MESSAGE_LENGTH
+    ? `${plain.slice(0, MAX_MESSAGE_LENGTH - 1).trimEnd()}…`
+    : plain;
+}
+
 export function buildWhatsAppLink(number: string, message: string = DEFAULT_MESSAGE): WhatsAppLink {
   const digits = normaliseWhatsAppNumber(number);
   if (!digits) return { ready: false, href: `#${WHATSAPP_NOTE_ID}` };
-  return { ready: true, href: `https://wa.me/${digits}?text=${encodeURIComponent(message)}` };
+  return {
+    ready: true,
+    href: `https://wa.me/${digits}?text=${encodeURIComponent(cleanMessage(message))}`,
+  };
+}
+
+/**
+ * The same chat with a different prefilled message (order calculators). Used on the client, where only the ready
+ * link is known: the number is taken from its href. A link that is not ready (placeholder number) is returned
+ * unchanged, so the button keeps opening the "number not set" note.
+ */
+export function withWhatsAppMessage(link: WhatsAppLink, message: string): WhatsAppLink {
+  if (!link.ready) return link;
+  const match = /^https:\/\/wa\.me\/(\d{8,15})\?/.exec(link.href);
+  if (!match) return link;
+  return buildWhatsAppLink(match[1]!, message);
 }
 
 export function instagramUrl(handle: string): string {

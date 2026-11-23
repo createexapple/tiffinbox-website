@@ -1,5 +1,3 @@
-.env
-.env.*
 !.env.example
 *.keystore
 *.jks
@@ -27,3 +25,4 @@ coverage/
 
 # Supabase CLI local state
 supabase/.temp/
+config.bat

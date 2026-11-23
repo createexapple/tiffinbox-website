@@ -119,6 +119,46 @@ for(const [m,l,f,b,k] of pairs){
   if(!ok&&!exempt)fails++;
   console.log(`| ${m} | ${l} | ${f} | ${b} | ${r.toFixed(2)}:1 | ${need}:1 | ${exempt?"exempt (disabled)":ok?"PASS":"FAIL"} |`);
 }
+
+// ---------------------------------------------------------------------------------------------
+// PUBLIC DESIGN (CR-004 addendum): colours of the operator's design "Tiffin Box Lahore" as built in
+// src/styles/public.css (.tb tokens, light-dark()). Reported separately: the public colours come from the design file,
+// so a pair below AA is listed for the operator, not silently "fixed". Does not change the exit code of the
+// original pairs above.
+const PL={bg:"#FAF6EE",band:"#F1E9DA",card:"#FFFFFF",ink:"#17201A",mut:"#4B5550",line:"#E4DCCB",green:"#1F5134",greenInk:"#1F5134",gold:"#F2B441",brown:"#A9561A",night:"#1E2B3A",tint:"#EEF3EC",chipOn:"#FFF3DC",chipEdge:"#8A5D00",ring:"#1F5134",footer:"#14241B"};
+const PD={bg:"#0E1712",band:"#13211A",card:"#182A20",ink:"#EEF1EC",mut:"#AEBBB2",line:"#28392F",green:"#1F5134",greenInk:"#8FD0A8",gold:"#F2B441",brown:"#E3A06A",night:"#1E2B3A",tint:"#1D3326",chipOn:"#3A2D12",chipEdge:"#C98A12",ring:"#F2B441",footer:"#14241B"};
+const pub=[];
+for(const [m,C] of [["light",PL],["dark",PD]]){
+  pub.push(
+   [m,"Body text on page",C.ink,C.bg,"text"],[m,"Body text on card",C.ink,C.card,"text"],[m,"Body text on band",C.ink,C.band,"text"],
+   [m,"Muted text on page",C.mut,C.bg,"text"],[m,"Muted text on card",C.mut,C.card,"text"],[m,"Muted text on band",C.mut,C.band,"text"],
+   [m,"Heading/link green on page",C.greenInk,C.bg,"text"],[m,"Heading/link green on card",C.greenInk,C.card,"text"],[m,"Heading/link green on band",C.greenInk,C.band,"text"],
+   [m,"Active nav / selected option: green on tint",C.greenInk,C.tint,"text"],[m,"Selected option: ink on tint",C.ink,C.tint,"text"],[m,"Muted (nav, small) on tint",C.mut,C.tint,"text"],
+   [m,"Kicker brown on page",C.brown,C.bg,"text"],[m,"Kicker brown on band",C.brown,C.band,"text"],[m,"Kicker brown on card",C.brown,C.card,"text"],
+   [m,"Fill button: white on green","#FFFFFF",C.green,"text"],[m,"Gold button / tag / chip: ink on gold","#17201A",C.gold,"text"],
+   [m,"Line button: green text on page",C.greenInk,C.bg,"text"],[m,"Outlined tag: ink on page",C.ink,C.bg,"text"],
+   [m,"Table header: white on green","#FFFFFF",C.green,"text"],[m,"Selected day tab: white on green","#FFFFFF",C.green,"text"],
+   [m,"Popular plan: gold on green",C.gold,C.green,"text"],[m,"Popular plan body: #CFE3D6 on green","#CFE3D6",C.green,"text"],
+   [m,"Night card title: gold on night",C.gold,C.night,"text"],[m,"Night card body: #C9D3DE on night","#C9D3DE",C.night,"text"],
+   [m,"Total panel big number: gold on green",C.gold,C.green,"text"],[m,"Total panel lines: #CFE3D6 on green","#CFE3D6",C.green,"text"],
+   [m,"CTA band text: #CFE3D6 on green","#CFE3D6",C.green,"text"],[m,"WhatsApp pill: white on green","#FFFFFF",C.green,"text"],
+   [m,"Footer body: #DCE3DE on footer","#DCE3DE",C.footer,"text"],[m,"Footer link: gold on footer",C.gold,C.footer,"text"],[m,"Footer small: #9FB0A5 on footer","#9FB0A5",C.footer,"text"],
+   [m,"Chip on (add-on selected): ink on chip tint",C.ink,C.chipOn,"text"],[m,"Chip on: muted small on chip tint",C.mut,C.chipOn,"text"],
+   [m,"Focus ring on page",C.ring,C.bg,"ui"],[m,"Focus ring on card",C.ring,C.card,"ui"],[m,"Focus ring (gold) on green",C.gold,C.green,"ui"],[m,"Focus ring (gold) on footer",C.gold,C.footer,"ui"],
+   [m,"Selected option border: green on card",C.greenInk,C.card,"ui"],[m,"Selected chip border on chip tint",C.chipEdge,C.chipOn,"ui"],
+   [m,"Unselected option / chip / tab / stepper border on card (design: line colour)",C.line,C.card,"ui"],[m,"Unselected tab border on page",C.line,C.bg,"ui"],
+  );
+}
+console.log("\n## Public design (light and dark): pairs used by src/styles/public.css\n");
+console.log("| Mode | Pair | Foreground | Background | Ratio | Need | Result |");
+console.log("|---|---|---|---|---|---|---|");
+let pubBelow=0;
+for(const [m,l,f,b,k] of pub){
+  const r=ratio(f,b), need=k==="text"?4.5:3, ok=r>=need;
+  if(!ok)pubBelow++;
+  console.log(`| ${m} | ${l} | ${f} | ${b} | ${r.toFixed(2)}:1 | ${need}:1 | ${ok?"PASS":"BELOW AA"} |`);
+}
+console.log(`\nPublic design: ${pub.length} pairs, ${pubBelow} below WCAG AA (listed above; colours come from the design file).`);
 console.log("\nForbidden combinations (must NOT be used for text / UI edges):");
 console.log("| Pair | Foreground | Background | Ratio |");
 console.log("|---|---|---|---|");

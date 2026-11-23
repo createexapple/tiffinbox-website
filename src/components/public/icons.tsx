@@ -6,8 +6,19 @@ interface IconProps {
 
 export function ChatIcon({ className = 'ico' }: IconProps) {
   return (
-    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M5 3h14a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3H10l-5 4v-4a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3zm3 6v2h8V9H8zm0 3.5v2h5v-2H8z" />
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+      // Outline glyph, as in the design: the inline style wins over the stylesheet's `fill: currentColor`.
+      style={{ fill: 'none' }}
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M21 12a8.5 8.5 0 0 1-12.6 7.4L3 21l1.6-5.2A8.5 8.5 0 1 1 21 12z" />
     </svg>
   );
 }
@@ -28,10 +39,10 @@ export function WarnIcon({ className = 'ico' }: IconProps) {
   );
 }
 
-export function MoonIcon({ className = 'ico' }: IconProps) {
+export function MoonIcon({ className = 't-moon' }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z" />
+      <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" />
     </svg>
   );
 }

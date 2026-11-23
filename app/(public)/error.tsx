@@ -23,15 +23,15 @@ export default function PublicError({
   }, [error]);
 
   return (
-    <section className="section notfound">
-      <div className="wrap narrow centered">
-        <h1 className="h1-page">Kuch masla ho gaya.</h1>
-        <p className="lede">
+    <div className="t-band t-notfound">
+      <div className="t-wrap">
+        <h1>Kuch masla ho gaya.</h1>
+        <p className="t-lead" style={{ marginInline: 'auto' }}>
           We could not load this page right now. Please try again in a minute, or ask us on
           WhatsApp.
         </p>
-        <div className="cta-row center">
-          <button type="button" className="btn btn-primary btn-lg" onClick={() => retry()}>
+        <div className="t-row" style={{ justifyContent: 'center', marginTop: 24 }}>
+          <button type="button" className="t-btn t-fill" onClick={() => retry()}>
             Try again
           </button>
           {link.ready ? (
@@ -41,6 +41,6 @@ export default function PublicError({
           ) : null}
         </div>
       </div>
-    </section>
+    </div>
   );
 }

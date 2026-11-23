@@ -1,24 +1,22 @@
 /**
  * Static page copy (A-16: developer-maintained in v1, architecture sec. 4).
  *
- * The Roman-Urdu headlines follow the client's "Full Spec to Match the App" (23 Nov 2026, CR-004).
+ * Wording follows the operator's design export "Tiffin Box Lahore" (24 Nov 2026, CR-004 addendum), which wins over the
+ * 23 Nov spec where the two differ in wording. Prices and rules are the same.
  *
  * Nothing here types a price, time, number or handle that the data holds: they are filled in from settings, pricing
- * rules, plans, dishes and add-ons, so editing those in the admin updates this copy too, and worked examples
- * (customize total, "Who's eating?") are computed. Every example is left out when the data it needs is missing.
+ * rules, plans, dishes and add-ons, so editing those in the admin updates this copy too. Sentences about a feature the
+ * data does not have (late night, delivery charge, the trial plan) are left out when the data is missing.
  */
 import { formatRs, formatTime12h } from '@/lib/format';
 import { describeSkipCutoff } from './derive';
 import type {
-  AddOn,
   AddOnCard,
   Audience,
-  CustomDish,
   DeliveryRow,
   PageCopy,
   Plan,
   PricingRules,
-  ServingOption,
   SiteSettings,
 } from './types';
 
@@ -26,18 +24,8 @@ import type {
  * Late-night delivery window and its order cut-off. These two are NOT in the database (the late-night PRICES are, in
  * pricing_rules). They come from the 23 Nov 2026 app spec; change them here if the client changes them.
  */
-export const LATE_NIGHT_WINDOW = '11 PM – 1 AM';
+export const LATE_NIGHT_WINDOW = '11 PM to 1 AM';
 export const LATE_NIGHT_ORDER_CUTOFF = '9 PM';
-
-/** People counted in the worked "Who's eating?" examples (illustration only, not a price). */
-const FAMILY_EXAMPLE_PEOPLE = 3;
-const GUEST_EXAMPLE_PEOPLE = 4;
-/** Nights in the late-night week total. */
-const NIGHTS_IN_WEEK = 7;
-/** Dish and add-on the spec uses in its examples; the first dish / add-on is used when they are not in the data. */
-const EXAMPLE_CUSTOM_DISH = 'Chicken qorma';
-const EXAMPLE_ADD_ON = 'Raita';
-const EXAMPLE_GUEST_DISH = 'Chicken biryani';
 
 export function joinList(items: readonly string[]): string {
   if (items.length <= 1) return items.join('');
@@ -50,13 +38,9 @@ export interface CopyInputs {
   /** Lowest per-meal plan price, or null when there is no per-meal plan. */
   mealsFrom: number | null;
   plans?: readonly Plan[];
-  dishes?: readonly CustomDish[];
-  addOns?: readonly AddOn[];
 }
 
-const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
-
-/** Price used in "Just me" and the family example: the most popular per-meal plan, else the first per-meal plan. */
+/** Price used by the "Who's eating?" calculator: the most popular per-meal plan, else the first per-meal plan. */
 export function examplePlan(plans: readonly Plan[]): Plan | null {
   const perMeal = plans.filter((p) => p.priceUnit === 'meal');
   return perMeal.find((p) => p.mostPopular) ?? perMeal[0] ?? null;
@@ -80,86 +64,7 @@ export function trialPlan(plans: readonly Plan[]): Plan | null {
   return plans.find((p) => p.periodLabel !== '') ?? null;
 }
 
-/** "Chicken qorma Rs 650 + raita Rs 80 + delivery Rs 150 = Rs 880." or null when there are no dishes. */
-export function customizeExample(
-  dishes: readonly CustomDish[],
-  addOns: readonly AddOn[],
-  deliveryCharge: number,
-): string | null {
-  const dish = dishes.find((d) => sameName(d.name, EXAMPLE_CUSTOM_DISH)) ?? dishes[0];
-  if (!dish) return null;
-  const addOn = addOns.find((a) => sameName(a.name, EXAMPLE_ADD_ON)) ?? addOns[0];
-  const parts = [`${dish.name} ${formatRs(dish.price)}`];
-  let total = dish.price;
-  if (addOn) {
-    parts.push(
-      `${addOn.name.charAt(0).toLowerCase()}${addOn.name.slice(1)} ${formatRs(addOn.price)}`,
-    );
-    total += addOn.price;
-  }
-  if (deliveryCharge > 0) {
-    parts.push(`delivery ${formatRs(deliveryCharge)}`);
-    total += deliveryCharge;
-  }
-  return `${parts.join(' + ')} = ${formatRs(total)}.`;
-}
-
-function servingOptions(
-  plans: readonly Plan[],
-  dishes: readonly CustomDish[],
-  delivery: number,
-): ServingOption[] {
-  const plan = examplePlan(plans);
-  const oneDelivery = delivery > 0 ? `one ${formatRs(delivery)} delivery` : 'one delivery';
-
-  let justMe: string | null = null;
-  let family: string | null = null;
-  if (plan) {
-    const mid = midPrice(plan);
-    justMe = `${plan.name}: ${formatRs(mid)} a meal`;
-    // Each extra person pays the meal price only (price minus the delivery that is part of it).
-    const perPerson = mid - delivery;
-    if (delivery > 0 && perPerson > 0) {
-      family = `${FAMILY_EXAMPLE_PEOPLE} people on ${plan.name}: ${formatRs(perPerson)} × ${FAMILY_EXAMPLE_PEOPLE} + ${formatRs(delivery)} = ${formatRs(perPerson * FAMILY_EXAMPLE_PEOPLE + delivery)} a meal`;
-    }
-  }
-
-  let guests: string | null = null;
-  const dish =
-    dishes.find((d) => sameName(d.name, EXAMPLE_GUEST_DISH)) ??
-    [...dishes].sort((a, b) => b.price - a.price)[0];
-  if (dish) {
-    const total = dish.price * GUEST_EXAMPLE_PEOPLE + delivery;
-    guests = `${GUEST_EXAMPLE_PEOPLE} × ${dish.name} ${formatRs(dish.price)}${delivery > 0 ? ` + ${formatRs(delivery)}` : ''} = ${formatRs(total)}`;
-  }
-
-  return [
-    {
-      title: 'Just me',
-      how: 'One meal, one delivery, any plan.',
-      example: justMe,
-    },
-    {
-      title: 'Family or group',
-      how: `Same address, ${oneDelivery} for everyone; each extra person pays the meal price only.`,
-      example: family,
-    },
-    {
-      title: 'Guests coming',
-      how: `One-time order for guests at home; each guest picks a dish from the Customize list; ${oneDelivery}; order 1 day ahead.`,
-      example: guests,
-    },
-  ];
-}
-
-export function buildPageCopy({
-  settings,
-  rules,
-  mealsFrom,
-  plans = [],
-  dishes = [],
-  addOns = [],
-}: CopyInputs): PageCopy {
+export function buildPageCopy({ settings, rules, mealsFrom, plans = [] }: CopyInputs): PageCopy {
   const lunch = formatTime12h(settings.meals.lunch.deliveredBy);
   const dinner = formatTime12h(settings.meals.dinner.deliveredBy);
   const delivery = rules.deliveryCharge;
@@ -169,40 +74,38 @@ export function buildPageCopy({
   const lateNight = rules.lateNight;
   const night = lateNightPerNight(rules);
   const trial = trialPlan(plans);
+  const hasBudget = plans.some((p) => p.name.trim().toLowerCase() === 'budget');
   const trialTag = trial
     ? `Try ${trial.periodLabel.replace(/^for\s+/i, '')} for ${formatRs(trial.weeklyPrice)}`
     : null;
+  const methods = joinList(settings.paymentMethods);
 
   const audiences: Audience[] = [
     {
       title: 'Hostel students',
-      problem: 'Tired of mess food, no kitchen, tight budget',
-      offer:
+      text:
         mealsFrom === null
-          ? 'Budget plan, lunch and dinner to the room'
-          : `Budget plan from ${formatRs(mealsFrom)} a meal, lunch and dinner to the room`,
+          ? 'Tired of mess food? Budget plan, lunch and dinner to your room.'
+          : `Tired of mess food? Budget plan from ${formatRs(mealsFrom)} a meal, lunch and dinner to your room.`,
     },
     {
-      title: 'Offices and working people',
-      problem: 'No time to cook or order every day',
-      offer: `Hot lunch at the desk by ${lunch}, Mon–Sat, one monthly bill for teams`,
+      title: 'Offices',
+      text: `Hot lunch at your desk by ${lunch}, Monday to Saturday. One monthly bill for teams.`,
     },
     {
-      title: 'People who can’t cook at home',
-      problem: 'Living alone, elderly, busy families',
-      offer: 'Full plans with breakfast, lunch and dinner',
+      title: "Can't cook at home",
+      text: 'Living alone, elderly or a busy family? Breakfast, lunch and dinner plans.',
     },
     {
       title: 'Families and guests',
-      problem: 'Feeding several people, or guests arriving',
-      offer: 'One delivery for the whole family; one-time guest orders',
+      text: 'One delivery for the whole family, or a one-time order when guests are coming.',
     },
   ];
   if (lateNight !== null && night !== null) {
     audiences.push({
-      title: 'Night shifts and late studiers',
-      problem: 'Hungry after the kitchen closes',
-      offer: `Late-night meal ${LATE_NIGHT_WINDOW}, ${formatRs(night)} a night`,
+      title: 'Night owls',
+      text: `Late shift or studying late? Late-night meal ${LATE_NIGHT_WINDOW}, ${formatRs(night)} a night.`,
+      dark: true,
     });
   }
 
@@ -217,14 +120,15 @@ export function buildPageCopy({
       key: 'late-night',
       title: 'Late-night meal',
       dark: true,
-      text: `Delivered ${LATE_NIGHT_WINDOW}. ${terms.join(' + ')} = ${formatRs(night)} a night, ${formatRs(night * NIGHTS_IN_WEEK)} for ${NIGHTS_IN_WEEK} nights. Add to any plan. Order or skip before ${LATE_NIGHT_ORDER_CUTOFF}.`,
+      text: `Delivered ${LATE_NIGHT_WINDOW}. ${terms.join(' + ')}. Add to any plan; order or skip before ${LATE_NIGHT_ORDER_CUTOFF}.`,
+      price: `${formatRs(night)} a night`,
     });
   }
   planAddOns.push(
     {
       key: 'breakfast',
       title: 'Add breakfast',
-      text: `Breakfast can be added to any plan for ${formatRs(rules.breakfastAddOnPerDay)} a day${delivery > 0 ? ', delivery included' : ''}.`,
+      text: `Paratha, egg and chai with any plan, ${formatRs(rules.breakfastAddOnPerDay)} a day${delivery > 0 ? ', delivery included' : ''}.`,
     },
     {
       key: 'team',
@@ -234,59 +138,59 @@ export function buildPageCopy({
     {
       key: 'monthly',
       title: `Monthly saves ${saving}`,
-      text: `Pay monthly, before the month starts, and save ${saving} compared with paying weekly.`,
+      text: `Pay before the month starts and save ${saving} compared with paying weekly.`,
     },
   );
 
-  const deliveryRows: DeliveryRow[] = (['breakfast', 'lunch', 'dinner'] as const).map(
-    (key, index) => {
-      const meal = settings.meals[key];
-      return {
-        key,
-        meal: meal.label,
-        deliveredBy: formatTime12h(meal.deliveredBy),
-        skipBefore: describeSkipCutoff(meal.skipCutoff),
-        charge:
-          deliveryText === null
-            ? 'Included in plan price'
-            : `${deliveryText} (${index === 0 ? 'included in plan price' : 'included'})`,
-      };
-    },
-  );
+  const deliveryRows: DeliveryRow[] = (['breakfast', 'lunch', 'dinner'] as const).map((key) => {
+    const meal = settings.meals[key];
+    return {
+      key,
+      meal: meal.label,
+      deliveredBy: formatTime12h(meal.deliveredBy),
+      skipBefore: describeSkipCutoff(meal.skipCutoff),
+      charge: deliveryText === null ? 'Included' : `${deliveryText}, included`,
+    };
+  });
   if (lateNight !== null) {
     deliveryRows.push({
       key: 'late-night',
       meal: 'Late night',
       deliveredBy: LATE_NIGHT_WINDOW,
       skipBefore: `${LATE_NIGHT_ORDER_CUTOFF} the same day`,
-      charge: `${deliveryText ?? 'No delivery charge'} + ${formatRs(lateNight.surcharge)} late-night`,
+      charge: `${deliveryText ? `${deliveryText} + ` : ''}${formatRs(lateNight.surcharge)} late-night`,
     });
   }
   deliveryRows.push(
     {
       key: 'family',
-      meal: 'Family or group order',
+      meal: 'Family or group',
       deliveredBy: 'Same times',
       skipBefore: 'Same cut-offs',
-      charge: `One ${deliveryText ?? 'delivery charge'} for everyone at one address`,
+      charge: `One ${deliveryText ?? 'delivery'} per address`,
     },
     {
       key: 'guest',
       meal: 'Guest order',
       deliveredBy: 'Time you choose',
       skipBefore: 'Order 1 day ahead',
-      charge: `One ${deliveryText ?? 'delivery charge'} for the whole order`,
+      charge: `One ${deliveryText ?? 'delivery'} per order`,
     },
   );
 
-  const methods = joinList(settings.paymentMethods);
+  const paymentParts = [
+    'Weekly before Sunday',
+    'monthly before the 1st (5% cheaper)'.replace('5%', saving),
+    ...(trial ? [`${trial.name} before day 1`] : []),
+  ];
 
   return {
     home: {
       eyebrow: settings.areaServed,
-      headline: 'Bhook lagi? Khana hazir.',
+      headline: 'Bhook lagi?',
+      headlineAccent: 'Khana hazir.',
       tagline: settings.tagline,
-      lede: 'Your favourite home-style meal, on time, every day.',
+      lede: 'Your favourite home-style meal, delivered to your room, desk or door, on time, every day.',
       tags: [mealsFromText ? `${mealsFromText}, delivered` : null, trialTag].filter(
         (tag): tag is string => tag !== null,
       ),
@@ -295,11 +199,11 @@ export function buildPageCopy({
       benefits: [
         {
           title: 'Waqt par, har roz',
-          text: `Lunch by ${lunch}, dinner by ${dinner}${lateNight ? `, late night ${LATE_NIGHT_WINDOW}` : ''}. Sealed tiffin boxes keep it hot and clean.`,
+          text: `Lunch by ${lunch}, dinner by ${dinner}${lateNight ? `, late night ${LATE_NIGHT_WINDOW}` : ''}. Sealed tiffins keep it hot and clean.`,
         },
         {
           title: 'Ghar jaisa swaad',
-          text: 'Home-style Pakistani food that tastes like Ammi made it.',
+          text: 'Home-style Pakistani food that tastes like Ammi made it. New menu every week.',
         },
         {
           title: 'Munasib daam',
@@ -309,7 +213,7 @@ export function buildPageCopy({
       audienceEyebrow: 'Who we serve',
       audienceHeadline: 'Aap ke liye.',
       audiences,
-      orderHeadline: 'Bhook lagi? Bas “HI” bhejein.',
+      orderHeadline: 'Bhook lagi? Bas "HI" bhejein.',
       orderLine: 'Your first meal can arrive the next day.',
     },
     steps: {
@@ -318,38 +222,39 @@ export function buildPageCopy({
       items: [
         {
           title: 'Message us',
-          text: `Send “HI” on WhatsApp or DM @${settings.instagramHandle} on Instagram.`,
+          text: `Send "HI" on WhatsApp or DM @${settings.instagramHandle} on Instagram.`,
         },
         {
           title: 'Pick a plan and pay',
-          text: `Choose ${trial ? `${trial.name}, ` : ''}weekly or monthly, and pay by ${methods}.`,
+          text: `${trial ? `${trial.name}, weekly or monthly` : 'Weekly or monthly'}. Pay by ${methods}.`,
         },
-        {
-          title: 'Eat on time',
-          text: 'Your first meal arrives the next day.',
-        },
+        { title: 'Eat on time', text: 'Your first meal arrives the next day.' },
       ],
+      linkText: 'Delivery times, skipping and payment',
     },
-    menuIntro: 'Every lunch and dinner comes with fresh roti unless it is a rice dish.',
-    menuLateNightNote:
-      lateNight === null
-        ? null
-        : `Late-night meal (${LATE_NIGHT_WINDOW}) is chosen from the dinner menu or the Customize list.`,
-    planNote: 'Budget is daal or sabzi + 2 roti; Office Lunch is lunch only, Mon–Sat.',
-    plansLede: `${mealsFrom === null ? 'Pick the plan that suits you' : `Meals start at ${formatRs(mealsFrom)}`}${deliveryText ? `, including ${deliveryText} door-to-door delivery` : ''}. Monthly plans save ${saving}. All prices in Pakistani Rupees.`,
-    plansSub: `Prices below are for one person${delivery > 0 ? ' and include delivery' : ''}.`,
+    menu: {
+      eyebrow: 'This week',
+      intro:
+        'New menu every Sunday evening. Every lunch and dinner comes with fresh roti unless it is a rice dish.',
+      note: [
+        lateNight
+          ? `Late-night meal (${LATE_NIGHT_WINDOW}) is chosen from the dinner menu or the Customize list.`
+          : null,
+        hasBudget ? 'Budget plan meals are daal or sabzi with 2 roti.' : null,
+      ]
+        .filter((part): part is string => part !== null)
+        .join(' '),
+      customizeLink: "Don't like a dish? Customize it",
+    },
+    plansLede: `${mealsFrom === null ? 'Pick the plan that suits you' : `Meals start at ${formatRs(mealsFrom)}`}${deliveryText ? `, including ${deliveryText} door-to-door delivery` : ''}. Monthly plans save ${saving}. Prices are for one person.`,
     planAddOns,
-    servingEyebrow: 'Serving options',
-    servingHeadline: 'Who’s eating?',
-    servingOptions: servingOptions(plans, dishes, delivery),
-    customizeIntro: `Any meal can be swapped for one of these dishes. Dish prices stay the same${
+    priceDisclaimer:
+      'Prices depend on supplier rates; we confirm your price on WhatsApp before you pay.',
+    customizeIntro: `Swap any meal for a dish you love. Dish prices stay the same${
       deliveryText
-        ? `; ${deliveryText} delivery is added to every custom order, because we deliver door to door`
+        ? `; ${deliveryText} delivery is added to every custom order, because we bring it to your door`
         : ''
-    }. Add-ons are extra. Tell us your choice on WhatsApp${
-      deliveryText ? `; the total is dish + add-ons + ${deliveryText} delivery` : ''
     }.`,
-    customizeExample: customizeExample(dishes, addOns, delivery),
     customizeLateNight:
       lateNight === null
         ? null
@@ -357,36 +262,32 @@ export function buildPageCopy({
     about: {
       headline: 'Ghar se door, ghar ka swaad.',
       mission:
-        'Give people who live away from home, or have no time to cook, food that tastes like home at a fair weekly price.',
-      // The story is not in the database and the client has not supplied it: keep an honest placeholder.
-      story: '[Our story — coming soon]',
-      storyIsPlaceholder: true,
+        'Our mission: give people who live away from home, or have no time to cook, food that tastes like home at a fair weekly price.',
+      whereWeDeliver: `${settings.areaServed}, including hostels, offices and homes around UMT. More areas soon.`,
       contactLateNight:
         lateNight === null ? null : `late-night orders until ${LATE_NIGHT_ORDER_CUTOFF}`,
     },
     howItWorks: {
       headline: 'Ordering is easy.',
-      lede: 'Three steps and one message.',
-      weeklyMenuLine:
-        'The weekly menu is shared every Sunday evening on WhatsApp, Instagram and the website.',
-      deliveryRows,
-      skip: `Up to ${settings.maxSkipsPerWeek} skips a week. Skipped meals are added to the end of your plan. Tell us on WhatsApp before the cut-off.`,
-      pause: 'Going home or on leave? Pause the plan on WhatsApp and restart when you’re back.',
-      packaging: 'Meals come sealed in tiffin boxes so they stay hot and clean.',
-      paymentIntro: 'You pay before your days start.',
-      paymentPoints: [
-        { label: 'Methods', text: `${methods}.` },
-        { label: 'Weekly plans', text: 'paid before Sunday.' },
+      steps: [
         {
-          label: 'Monthly plans',
-          text: `paid before the 1st; ${saving} cheaper than weekly.`,
+          title: 'Message us',
+          text: `Send "HI" on WhatsApp or DM @${settings.instagramHandle} on Instagram.`,
         },
-        ...(trial ? [{ label: trial.name, text: 'paid before day 1.' }] : []),
-        { label: 'Offices', text: 'one monthly invoice for the whole team.' },
-        { label: 'Receipts', text: 'sent on WhatsApp after every payment.' },
+        {
+          title: 'Pick a plan and pay',
+          text: `${trial ? `${trial.name}, weekly or monthly` : 'Weekly or monthly'}. ${methods}, before your days start.`,
+        },
+        {
+          title: 'Eat on time',
+          text: 'Your first meal arrives the next day. The weekly menu is shared every Sunday evening.',
+        },
       ],
+      deliveryRows,
+      skip: `Up to ${settings.maxSkipsPerWeek} skips a week. Skipped meals are added to the end of your plan.`,
+      pause: "Going home or on leave? Pause on WhatsApp and restart when you're back.",
+      packaging: 'Meals come sealed so they stay hot and clean.',
+      payment: `${paymentParts.join(', ')}. Offices get one monthly invoice.`,
     },
-    priceDisclaimer:
-      'Prices depend on our supplier’s rates and may change. We confirm your price on WhatsApp before you pay.',
   };
 }

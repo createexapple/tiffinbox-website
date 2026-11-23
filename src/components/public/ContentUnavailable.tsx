@@ -5,17 +5,19 @@
  */
 export function ContentUnavailable() {
   return (
-    <section className="section notfound" data-testid="content-unavailable">
-      <div className="wrap narrow centered">
-        <h1 className="h1-page">Kuch masla ho gaya.</h1>
-        <p className="lede">We could not load this page right now. Please try again in a minute.</p>
-        <div className="cta-row center">
+    <div className="t-band t-notfound" data-testid="content-unavailable">
+      <div className="t-wrap">
+        <h1>Kuch masla ho gaya.</h1>
+        <p className="t-lead" style={{ marginInline: 'auto' }}>
+          We could not load this page right now. Please try again in a minute.
+        </p>
+        <div className="t-row" style={{ justifyContent: 'center', marginTop: 24 }}>
           {/* A plain link to the same page: a fresh request, which re-reads the content. */}
-          <a className="btn btn-primary btn-lg" href="">
+          <a className="t-btn t-fill" href="">
             Try again
           </a>
         </div>
       </div>
-    </section>
+    </div>
   );
 }

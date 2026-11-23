@@ -4,12 +4,11 @@ import {
   ContentUnavailableError,
   getContentInfo,
   getPageCopy,
-  getPageImages,
   getSiteSettings,
 } from '@/content';
-import { publicMediaUrl } from '@/lib/media-url';
 import { stripQuestionCodes } from '@/lib/format';
 import { buildWhatsAppLink, isPlaceholder } from '@/lib/whatsapp';
+import '@/styles/public.css';
 import { ContentUnavailable } from './ContentUnavailable';
 import { MockBanner } from './MockBanner';
 import { PreviewBanner } from './PreviewBanner';
@@ -34,12 +33,7 @@ export async function PublicShell({
 }) {
   let loaded;
   try {
-    loaded = await Promise.all([
-      getSiteSettings(),
-      getPageCopy(),
-      getContentInfo(),
-      getPageImages(),
-    ]);
+    loaded = await Promise.all([getSiteSettings(), getPageCopy(), getContentInfo()]);
   } catch (error) {
     // NFR-08: no content and no last-good copy. Show the designed error state (server-rendered, so it is in
     // the HTML) inside minimal chrome; never a blank page or a crash.
@@ -52,33 +46,34 @@ export async function PublicShell({
     }
     throw error;
   }
-  const [settings, copy, info, pageImages] = loaded;
-  const logoUrl = pageImages.logo ? publicMediaUrl(pageImages.logo.path) : null;
+  const [settings, copy, info] = loaded;
   const link = buildWhatsAppLink(settings.whatsappNumber);
 
   return (
     <WhatsAppProvider link={link}>
-      <a className="skip" href="#main">
-        Skip to content
-      </a>
-      <MockBanner info={info} />
-      <PreviewBanner info={info} />
-      <SiteHeader businessName={settings.businessName} logoUrl={logoUrl} />
-      <main id="main">{children}</main>
-      <OrderEnd link={link} headline={copy.home.orderHeadline} line={copy.home.orderLine} />
-      <SiteFooter settings={settings} logoUrl={logoUrl} />
-      <WhatsAppButton link={link} variant="fab" ariaLabel="WhatsApp: start an order">
-        WhatsApp
-      </WhatsAppButton>
-      {link.ready ? null : (
-        <WhatsAppNote
-          placeholder={
-            isPlaceholder(settings.whatsappNumber)
-              ? stripQuestionCodes(settings.whatsappNumber)
-              : '[WhatsApp number]'
-          }
-        />
-      )}
+      <div className="tb">
+        <a className="skip" href="#main">
+          Skip to content
+        </a>
+        <MockBanner info={info} />
+        <PreviewBanner info={info} />
+        <SiteHeader businessName={settings.businessName} />
+        <main id="main">{children}</main>
+        <OrderEnd link={link} headline={copy.home.orderHeadline} line={copy.home.orderLine} />
+        <SiteFooter settings={settings} />
+        <WhatsAppButton link={link} variant="fab" ariaLabel="WhatsApp: start an order">
+          WhatsApp
+        </WhatsAppButton>
+        {link.ready ? null : (
+          <WhatsAppNote
+            placeholder={
+              isPlaceholder(settings.whatsappNumber)
+                ? stripQuestionCodes(settings.whatsappNumber)
+                : '[WhatsApp number]'
+            }
+          />
+        )}
+      </div>
     </WhatsAppProvider>
   );
 }
@@ -86,17 +81,17 @@ export async function PublicShell({
 /** Minimal chrome when the content backend and the last-good copy are both unavailable. */
 function UnavailableChrome({ children }: { children: ReactNode }) {
   return (
-    <>
+    <div className="tb">
       <a className="skip" href="#main">
         Skip to content
       </a>
       <SiteHeader businessName="Tiffin Box" />
       <main id="main">{children}</main>
-      <footer className="site-footer">
-        <div className="wrap">
+      <footer className="t-footer">
+        <div className="t-wrap">
           <p>Tiffin Box</p>
         </div>
       </footer>
-    </>
+    </div>
   );
 }

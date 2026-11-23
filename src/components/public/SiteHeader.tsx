@@ -1,32 +1,20 @@
-import Link from 'next/link';
+import { DEFAULT_LOGO_URL } from '@/lib/brand';
 import { MainNav } from './MainNav';
 
 /**
- * Logo top-left linking Home, plus the six-page navigation (FR-01). Shows the published logo when one is
- * assigned in the admin (Images), otherwise a plain badge with the business name.
+ * Logo (image only) top-left linking Home, plus the six-section navigation (FR-01). Always the bundled logo (the
+ * design's): a logo assigned in the admin no longer changes the public site.
  */
-export function SiteHeader({
-  businessName,
-  logoUrl = null,
-}: {
-  businessName: string;
-  logoUrl?: string | null;
-}) {
+export function SiteHeader({ businessName }: { businessName: string }) {
   return (
-    <header className="site-header">
-      <div className="wrap">
-        <Link className="brand" href="/" aria-label={`${businessName}, home`}>
-          {logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img className="logo-img" src={logoUrl} alt="" height={48} decoding="async" />
-          ) : (
-            <>
-              <span className="logo-ph" role="img" aria-label={`${businessName} logo`}>
-                {businessName}
-              </span>
-            </>
-          )}
-        </Link>
+    <header className="t-header">
+      <div className="t-wrap">
+        {/* Plain anchor on purpose: the sections are shown by :target, which only a real fragment navigation updates. */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+        <a className="t-logo" href="/#home" aria-label={`${businessName}, home`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={DEFAULT_LOGO_URL} alt="" width={58} height={58} decoding="async" />
+        </a>
         <MainNav />
       </div>
     </header>

@@ -11,7 +11,6 @@ import {
   getPricingRules,
   getSiteSettings,
 } from '@/content';
-import { BRAND_NAME_URDU } from '@/content/brand';
 import { isPlaceholder } from '@/lib/whatsapp';
 
 describe('content layer (mock source)', () => {
@@ -76,30 +75,31 @@ describe('content layer (mock source)', () => {
 
   it('builds page copy from settings and prices instead of typing them', async () => {
     const copy = await getPageCopy();
-    expect(copy.home.headline).toBe('Bhook lagi? Khana hazir.');
+    expect(`${copy.home.headline} ${copy.home.headlineAccent}`).toBe('Bhook lagi? Khana hazir.');
     expect(copy.home.tagline).toBe('Ghar ka khana, Ammi ke pyaar jaisa');
     expect(copy.home.benefits).toHaveLength(3);
     expect(copy.home.benefits[2]?.text).toBe(
       'Meals from Rs 500 with door-to-door delivery included. Save 5% when you pay monthly.',
     );
     expect(copy.home.benefits[0]?.text).toBe(
-      'Lunch by 1 PM, dinner by 8 PM, late night 11 PM – 1 AM. Sealed tiffin boxes keep it hot and clean.',
+      'Lunch by 1 PM, dinner by 8 PM, late night 11 PM to 1 AM. Sealed tiffins keep it hot and clean.',
     );
     expect(copy.home.tags).toEqual(['Meals from Rs 500, delivered', 'Try 3 days for Rs 4,800']);
     expect(copy.steps.items[1]?.text).toBe(
-      'Choose Starter, weekly or monthly, and pay by JazzCash, Easypaisa or bank transfer.',
+      'Starter, weekly or monthly. Pay by JazzCash, Easypaisa or bank transfer.',
+    );
+    expect(copy.howItWorks.steps[1]?.text).toBe(
+      'Starter, weekly or monthly. JazzCash, Easypaisa or bank transfer, before your days start.',
     );
     expect(copy.howItWorks.skip).toContain('Up to 3 skips a week');
     expect(copy.plansLede).toBe(
-      'Meals start at Rs 500, including Rs 150 door-to-door delivery. Monthly plans save 5%. All prices in Pakistani Rupees.',
+      'Meals start at Rs 500, including Rs 150 door-to-door delivery. Monthly plans save 5%. Prices are for one person.',
     );
-    expect(copy.plansSub).toBe('Prices below are for one person and include delivery.');
   });
 
-  it('does not type the Urdu brand name in the copy; it lives in the brand module', async () => {
+  it('has no Urdu text in the copy (the Urdu name is in the logo image only)', async () => {
     const copy = JSON.stringify(await getPageCopy());
     expect(copy).not.toMatch(/[؀-ۿ]/);
-    expect(BRAND_NAME_URDU).toBe('ٹفن باکس');
   });
 
   it('shows no question codes or draft notes anywhere in the page copy', async () => {

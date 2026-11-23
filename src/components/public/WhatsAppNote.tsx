@@ -1,35 +1,50 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { WHATSAPP_NOTE_ID } from '@/lib/whatsapp';
 
 /**
- * Placeholder state for the WhatsApp buttons while the number has not been supplied  * Opens through the URL hash (CSS :target) as in the prototype; this adds focus and Escape handling.
- * Rendered only when there is no usable number; disappears once a real number is in settings.
+ * Placeholder state for the WhatsApp buttons while the number has not been supplied.
+ * With JavaScript, a click on any button that points at the note opens it in place (no address change, so the section
+ * on screen stays); Escape and Close shut it and focus returns to the button. Without JavaScript the same buttons
+ * link to #wa-note and the CSS :target rule opens it. Rendered only when there is no usable number.
  */
 export function WhatsAppNote({ placeholder }: { placeholder: string }) {
+  const [open, setOpen] = useState(false);
   const closeRef = useRef<HTMLAnchorElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    const hash = `#${WHATSAPP_NOTE_ID}`;
-    const focusIfOpen = () => {
-      if (window.location.hash === hash) requestAnimationFrame(() => closeRef.current?.focus());
+    const onClick = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey) return;
+      const link = (event.target as Element | null)?.closest<HTMLAnchorElement>(
+        `a[href="#${WHATSAPP_NOTE_ID}"]`,
+      );
+      if (!link) return;
+      event.preventDefault();
+      openerRef.current = link;
+      setOpen(true);
     };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && window.location.hash === hash) window.location.hash = 'close';
-    };
-    window.addEventListener('hashchange', focusIfOpen);
-    window.addEventListener('keydown', onKeyDown);
-    focusIfOpen();
-    return () => {
-      window.removeEventListener('hashchange', focusIfOpen);
-      window.removeEventListener('keydown', onKeyDown);
-    };
+    document.addEventListener('click', onClick);
+    return () => document.removeEventListener('click', onClick);
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    closeRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        openerRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open]);
 
   return (
     <div
-      className="modal"
+      className={open ? 'modal open' : 'modal'}
       id={WHATSAPP_NOTE_ID}
       role="dialog"
       aria-modal="true"
@@ -38,11 +53,20 @@ export function WhatsAppNote({ placeholder }: { placeholder: string }) {
       <div className="dialog">
         <h2 id="wa-note-h">WhatsApp number not set yet</h2>
         <p>
-          On the live site this button opens a WhatsApp chat with the message “HI” already typed.
-          The number has not been supplied yet: <b>{placeholder}</b>.
+          On the live site this button opens a WhatsApp chat with the message &quot;HI&quot; already
+          typed. The number has not been supplied yet: <b>{placeholder}</b>.
         </p>
         <div className="actions">
-          <a ref={closeRef} className="btn btn-primary" href="#close">
+          <a
+            ref={closeRef}
+            className="btn btn-primary"
+            href="#close"
+            onClick={(event) => {
+              event.preventDefault();
+              setOpen(false);
+              openerRef.current?.focus();
+            }}
+          >
             Close
           </a>
         </div>

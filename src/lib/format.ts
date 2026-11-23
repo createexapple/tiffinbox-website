@@ -72,6 +72,23 @@ export function formatMenuWeekLabel(start: Date | string, end: Date | string): s
   return `${s.day} ${s.month}–${e.day} ${e.month}`;
 }
 
+/** Month name in full for a menu heading. */
+function karachiLongMonth(input: Date | string): string {
+  return new Intl.DateTimeFormat('en-GB', { timeZone: TIME_ZONE, month: 'long' }).format(
+    toDate(input),
+  );
+}
+
+/** "23 to 29 November", or "30 November to 6 December" when the week crosses a month. */
+export function formatMenuHeadingDates(start: Date | string, end: Date | string): string {
+  const s = karachiParts(start);
+  const e = karachiParts(end);
+  const sm = karachiLongMonth(start);
+  const em = karachiLongMonth(end);
+  if (s.month === e.month && s.year === e.year) return `${s.day} to ${e.day} ${em}`;
+  return `${s.day} ${sm} to ${e.day} ${em}`;
+}
+
 /** Today's calendar date in Karachi as "YYYY-MM-DD" (sortable, comparable with stored dates). */
 export function karachiDateKey(now: Date = new Date()): string {
   const parts = new Intl.DateTimeFormat('en-GB', {

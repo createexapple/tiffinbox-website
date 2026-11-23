@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildPageCopy, customizeExample, LATE_NIGHT_WINDOW } from '@/content/copy';
+import { buildPageCopy } from '@/content/copy';
 import { mapPublicContent, MOST_POPULAR_TAG } from '@/content/live';
 import { MOCK_CONTENT } from '@/content/mock';
 import type { ContentSnapshot, PricingRules } from '@/content';
@@ -107,101 +107,73 @@ function copyFor(over: Partial<ContentSnapshot> = {}, rules: Partial<PricingRule
     rules: { ...snap.pricingRules, ...rules },
     mealsFrom: 500,
     plans: snap.plans,
-    dishes: snap.customDishes,
-    addOns: snap.addOns,
   });
 }
 
-describe('page copy: figures are computed from data', () => {
-  it('computes the late-night card and week total', () => {
+describe('page copy (design "Tiffin Box Lahore"): figures are computed from data', () => {
+  it('builds the late-night card with the price line from the data', () => {
     const card = copyFor().planAddOns[0];
-    expect(card?.dark).toBe(true);
+    expect(card).toMatchObject({ key: 'late-night', dark: true, price: 'Rs 900 a night' });
     expect(card?.text).toBe(
-      `Delivered ${LATE_NIGHT_WINDOW}. Rs 650 meal + Rs 150 delivery + Rs 100 late-night = Rs 900 a night, Rs 6,300 for 7 nights. Add to any plan. Order or skip before 9 PM.`,
+      'Delivered 11 PM to 1 AM. Rs 650 meal + Rs 150 delivery + Rs 100 late-night. Add to any plan; order or skip before 9 PM.',
     );
     const changed = copyFor({}, { lateNight: { mealPrice: 700, surcharge: 120 } }).planAddOns[0];
-    expect(changed?.text).toContain('Rs 970 a night, Rs 6,790 for 7 nights');
+    expect(changed?.price).toBe('Rs 970 a night');
   });
 
-  it('lists the four add-on cards in order with breakfast from the data', () => {
+  it('lists the four add-on cards with the design wording', () => {
     const cards = copyFor().planAddOns;
     expect(cards.map((c) => c.key)).toEqual(['late-night', 'breakfast', 'team', 'monthly']);
     expect(cards[1]?.text).toBe(
-      'Breakfast can be added to any plan for Rs 550 a day, delivery included.',
+      'Paratha, egg and chai with any plan, Rs 550 a day, delivery included.',
     );
+    expect(cards[3]).toMatchObject({
+      title: 'Monthly saves 5%',
+      text: 'Pay before the month starts and save 5% compared with paying weekly.',
+    });
   });
 
-  it('computes the three "Who’s eating?" examples from the plan midpoint, delivery and dishes', () => {
-    const [justMe, family, guests] = copyFor().servingOptions;
-    expect(justMe?.example).toBe('Student: Rs 775 a meal');
-    expect(family?.example).toBe('3 people on Student: Rs 625 × 3 + Rs 150 = Rs 2,025 a meal');
-    expect(guests?.example).toBe('4 × Chicken biryani Rs 700 + Rs 150 = Rs 2,950');
-  });
-
-  it('follows data changes: another delivery charge and dish price', () => {
-    const dishes = MOCK_CONTENT.customDishes.map((d) =>
-      d.name === 'Chicken biryani' ? { ...d, price: 720 } : d,
-    );
-    const [, family, guests] = copyFor(
-      { customDishes: dishes },
-      { deliveryCharge: 200 },
-    ).servingOptions;
-    expect(family?.example).toBe('3 people on Student: Rs 575 × 3 + Rs 200 = Rs 1,925 a meal');
-    expect(guests?.example).toBe('4 × Chicken biryani Rs 720 + Rs 200 = Rs 3,080');
-  });
-
-  it('uses the priciest dish when there is no Chicken biryani, and omits examples without data', () => {
-    const dishes = MOCK_CONTENT.customDishes.filter((d) => d.name !== 'Chicken biryani');
-    expect(copyFor({ customDishes: dishes }).servingOptions[2]?.example).toBe(
-      '4 × Fried fish Rs 750 + Rs 150 = Rs 3,150',
-    );
-    const bare = copyFor({ customDishes: [], plans: [] });
-    expect(bare.servingOptions.map((o) => o.example)).toEqual([null, null, null]);
-    expect(bare.customizeExample).toBeNull();
-  });
-
-  it('builds the customize example: Chicken qorma + Raita + delivery', () => {
-    expect(copyFor().customizeExample).toBe(
-      'Chicken qorma Rs 650 + raita Rs 80 + delivery Rs 150 = Rs 880.',
-    );
-  });
-
-  it('customize example falls back to the first dish and first add-on, and skips a zero delivery', () => {
-    const dishes = MOCK_CONTENT.customDishes.filter((d) => d.name !== 'Chicken qorma');
-    const addOns = MOCK_CONTENT.addOns.filter((a) => a.name !== 'Raita');
-    expect(customizeExample(dishes, addOns, 150)).toBe(
-      'Daal or sabzi Rs 400 + achaar Rs 30 + delivery Rs 150 = Rs 580.',
-    );
-    expect(customizeExample(dishes, [], 0)).toBe('Daal or sabzi Rs 400 = Rs 400.');
-    expect(customizeExample([], addOns, 150)).toBeNull();
-  });
-
-  it('builds the delivery table: six rows, charges from the data', () => {
+  it('builds the delivery table: six rows with the design labels and charges', () => {
     const rows = copyFor().howItWorks.deliveryRows;
     expect(rows.map((r) => r.meal)).toEqual([
       'Breakfast',
       'Lunch',
       'Dinner',
       'Late night',
-      'Family or group order',
+      'Family or group',
       'Guest order',
     ]);
     expect(rows.map((r) => r.charge)).toEqual([
-      'Rs 150 (included in plan price)',
-      'Rs 150 (included)',
-      'Rs 150 (included)',
+      'Rs 150, included',
+      'Rs 150, included',
+      'Rs 150, included',
       'Rs 150 + Rs 100 late-night',
-      'One Rs 150 for everyone at one address',
-      'One Rs 150 for the whole order',
+      'One Rs 150 per address',
+      'One Rs 150 per order',
     ]);
-    expect(rows[3]).toMatchObject({ deliveredBy: '11 PM – 1 AM', skipBefore: '9 PM the same day' });
+    expect(rows[3]).toMatchObject({
+      deliveredBy: '11 PM to 1 AM',
+      skipBefore: '9 PM the same day',
+    });
     expect(rows[0]).toMatchObject({ deliveredBy: '8 AM', skipBefore: '10 PM the night before' });
+  });
+
+  it('writes the four small blocks of How it works', () => {
+    const how = copyFor().howItWorks;
+    expect(how.skip).toBe('Up to 3 skips a week. Skipped meals are added to the end of your plan.');
+    expect(how.pause).toBe(
+      "Going home or on leave? Pause on WhatsApp and restart when you're back.",
+    );
+    expect(how.packaging).toBe('Meals come sealed so they stay hot and clean.');
+    expect(how.payment).toBe(
+      'Weekly before Sunday, monthly before the 1st (5% cheaper), Starter before day 1. Offices get one monthly invoice.',
+    );
   });
 
   it('drops every late-night and delivery sentence when the document has neither (old release)', () => {
     const copy = copyFor({}, { lateNight: null, deliveryCharge: 0 });
     expect(copy.planAddOns.map((c) => c.key)).toEqual(['breakfast', 'team', 'monthly']);
-    expect(copy.menuLateNightNote).toBeNull();
+    expect(copy.menu.note).toBe('Budget plan meals are daal or sabzi with 2 roti.');
     expect(copy.customizeLateNight).toBeNull();
     expect(copy.about.contactLateNight).toBeNull();
     expect(copy.home.audiences).toHaveLength(4);
@@ -214,35 +186,69 @@ describe('page copy: figures are computed from data', () => {
     ]);
     expect(copy.plansLede).not.toMatch(/delivery/);
     expect(copy.customizeIntro).not.toMatch(/delivery/);
-    expect(copy.servingOptions[1]?.example).toBeNull();
     expect(JSON.stringify(copy)).not.toMatch(/NaN|undefined/);
   });
 
-  it('puts five audiences on Home, with the two new cards', () => {
+  it('puts five "Who we serve" cards on Home: one paragraph each, Night owls dark', () => {
     const { audiences } = copyFor().home;
     expect(audiences.map((a) => a.title)).toEqual([
       'Hostel students',
-      'Offices and working people',
-      'People who can’t cook at home',
+      'Offices',
+      "Can't cook at home",
       'Families and guests',
-      'Night shifts and late studiers',
+      'Night owls',
     ]);
-    expect(audiences[0]?.offer).toContain('Rs 500 a meal');
-    expect(audiences[4]?.offer).toBe('Late-night meal 11 PM – 1 AM, Rs 900 a night');
+    expect(audiences[0]?.text).toBe(
+      'Tired of mess food? Budget plan from Rs 500 a meal, lunch and dinner to your room.',
+    );
+    expect(audiences[1]?.text).toBe(
+      'Hot lunch at your desk by 1 PM, Monday to Saturday. One monthly bill for teams.',
+    );
+    expect(audiences[4]).toMatchObject({
+      dark: true,
+      text: 'Late shift or studying late? Late-night meal 11 PM to 1 AM, Rs 900 a night.',
+    });
+  });
+
+  it('writes the Menu eyebrow, intro and note; the Budget sentence needs a Budget plan', () => {
+    const { menu } = copyFor();
+    expect(menu.eyebrow).toBe('This week');
+    expect(menu.intro).toBe(
+      'New menu every Sunday evening. Every lunch and dinner comes with fresh roti unless it is a rice dish.',
+    );
+    expect(menu.note).toBe(
+      'Late-night meal (11 PM to 1 AM) is chosen from the dinner menu or the Customize list. Budget plan meals are daal or sabzi with 2 roti.',
+    );
+    const noBudget = copyFor({ plans: MOCK_CONTENT.plans.filter((p) => p.name !== 'Budget') });
+    expect(noBudget.menu.note).toBe(
+      'Late-night meal (11 PM to 1 AM) is chosen from the dinner menu or the Customize list.',
+    );
+    expect(menu.customizeLink).toBe("Don't like a dish? Customize it");
   });
 
   it('omits the trial tag and "Starter" wording when no plan has a period label', () => {
     const plans = MOCK_CONTENT.plans.filter((p) => p.periodLabel === '');
     const copy = copyFor({ plans });
     expect(copy.home.tags).toEqual(['Meals from Rs 500, delivered']);
-    expect(copy.steps.items[1]?.text).toMatch(/^Choose weekly or monthly/);
+    expect(copy.steps.items[1]?.text).toMatch(/^Weekly or monthly\./);
+    expect(copy.howItWorks.payment).not.toMatch(/Starter/);
   });
 
-  it('keeps an honest story placeholder without a question code', () => {
+  it('has no story block and a mission that starts "Our mission:"', () => {
     const { about } = copyFor();
-    expect(about.story).toBe('[Our story — coming soon]');
-    expect(about.storyIsPlaceholder).toBe(true);
+    expect(about.mission.startsWith('Our mission: give people')).toBe(true);
+    expect(about).not.toHaveProperty('story');
+    expect(about.whereWeDeliver).toBe(
+      'Johar Town, Lahore, including hostels, offices and homes around UMT. More areas soon.',
+    );
     expect(about.contactLateNight).toBe('late-night orders until 9 PM');
+  });
+
+  it('writes the customize intro with the delivery charge from the data', () => {
+    expect(copyFor().customizeIntro).toBe(
+      'Swap any meal for a dish you love. Dish prices stay the same; Rs 150 delivery is added to every custom order, because we bring it to your door.',
+    );
+    expect(copyFor({}, { deliveryCharge: 200 }).customizeIntro).toContain('Rs 200 delivery');
   });
 });
 

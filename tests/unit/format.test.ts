@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  formatMenuHeadingDates,
   formatMenuWeekLabel,
   formatRs,
   formatRsRange,
@@ -74,5 +75,17 @@ describe('formatTime12h', () => {
   it('rejects malformed times', () => {
     expect(() => formatTime12h('25:00')).toThrow(RangeError);
     expect(() => formatTime12h('8am')).toThrow(RangeError);
+  });
+});
+
+describe('formatMenuHeadingDates (Menu page heading)', () => {
+  it('same month: "23 to 29 November"', () => {
+    expect(formatMenuHeadingDates('2026-11-23', '2026-11-29')).toBe('23 to 29 November');
+  });
+  it('across months: "30 November to 6 December"', () => {
+    expect(formatMenuHeadingDates('2026-11-30', '2026-12-06')).toBe('30 November to 6 December');
+  });
+  it('across years keeps both month names', () => {
+    expect(formatMenuHeadingDates('2026-12-28', '2027-01-03')).toBe('28 December to 3 January');
   });
 });

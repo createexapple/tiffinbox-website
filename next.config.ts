@@ -11,6 +11,16 @@ const nextConfig: NextConfig = {
     // 8 MB file + multipart overhead. The action checks the session first, then type, size and content.
     serverActions: { bodySizeLimit: '9mb' },
   },
+  async redirects() {
+    // The public site is one page now; the old page addresses keep working and land on their section.
+    return [
+      { source: '/menu', destination: '/#menu', permanent: true },
+      { source: '/plans', destination: '/#plans', permanent: true },
+      { source: '/customize', destination: '/#customize', permanent: true },
+      { source: '/how-it-works', destination: '/#how', permanent: true },
+      { source: '/about', destination: '/#about', permanent: true },
+    ];
+  },
   async headers() {
     return [
       {

@@ -1,8 +1,7 @@
 import type { MetadataRoute } from 'next';
-import { PUBLIC_PAGES } from '@/lib/seo';
 import { getSiteUrl } from '@/lib/site-url';
 
+/** The public site is one page: only the home URL is listed (the sections are hash anchors, not URLs). */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = getSiteUrl();
-  return PUBLIC_PAGES.map((page) => ({ url: page.href === '/' ? base : `${base}${page.href}` }));
+  return [{ url: getSiteUrl() }];
 }

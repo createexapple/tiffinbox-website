@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildWhatsAppLink,
+  cleanMessage,
+  DEFAULT_MESSAGE,
   instagramUrl,
   isPlaceholder,
+  MAX_MESSAGE_LENGTH,
   normaliseWhatsAppNumber,
+  withWhatsAppMessage,
 } from '@/lib/whatsapp';
 
 describe('isPlaceholder', () => {
@@ -34,10 +38,11 @@ describe('normaliseWhatsAppNumber', () => {
 });
 
 describe('buildWhatsAppLink', () => {
-  it('builds a wa.me click-to-chat link with "HI" prefilled', () => {
+  it('builds a wa.me click-to-chat link with the design message prefilled', () => {
+    expect(DEFAULT_MESSAGE).toBe('HI Tiffin Box, I want to order.');
     expect(buildWhatsAppLink('+92 300 1234567')).toEqual({
       ready: true,
-      href: 'https://wa.me/923001234567?text=HI',
+      href: 'https://wa.me/923001234567?text=HI%20Tiffin%20Box%2C%20I%20want%20to%20order.',
     });
   });
   it('never produces a wa.me link while the number is a placeholder', () => {
@@ -47,6 +52,31 @@ describe('buildWhatsAppLink', () => {
   it('encodes a custom message', () => {
     const link = buildWhatsAppLink('923001234567', 'Hi there');
     expect(link.href).toBe('https://wa.me/923001234567?text=Hi%20there');
+  });
+});
+
+describe('custom messages', () => {
+  it('cleans to plain text: control characters and line breaks become spaces, length is capped', () => {
+    expect(cleanMessage('a\nb\t c\u0000d')).toBe('a b c d');
+    const long = cleanMessage('x'.repeat(2000));
+    expect(long.length).toBe(MAX_MESSAGE_LENGTH);
+    expect(long.endsWith('…')).toBe(true);
+  });
+  it('URL-encodes everything that could break the link (no free text can add parameters)', () => {
+    const link = buildWhatsAppLink('923001234567', 'HI & text=evil #x?y');
+    expect(link.href).toBe('https://wa.me/923001234567?text=HI%20%26%20text%3Devil%20%23x%3Fy');
+  });
+  it('swaps the message on a ready link and leaves a placeholder link alone', () => {
+    const ready = buildWhatsAppLink('923001234567');
+    expect(withWhatsAppMessage(ready, 'HI Tiffin Box, I want the Starter plan.').href).toBe(
+      'https://wa.me/923001234567?text=HI%20Tiffin%20Box%2C%20I%20want%20the%20Starter%20plan.',
+    );
+    const note = buildWhatsAppLink('[WhatsApp number]');
+    expect(withWhatsAppMessage(note, 'anything')).toEqual({ ready: false, href: '#wa-note' });
+  });
+  it('ignores a ready link that is not a wa.me link', () => {
+    const odd = { ready: true as const, href: 'https://example.com/?text=x' };
+    expect(withWhatsAppMessage(odd, 'hi')).toBe(odd);
   });
 });
 

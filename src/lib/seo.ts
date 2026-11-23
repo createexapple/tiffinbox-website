@@ -3,14 +3,17 @@ import { isIndexingAllowed } from './site-url';
 
 export const SITE_NAME = 'Tiffin Box';
 
-/** The six public pages, in navigation order. Single source for nav, footer and sitemap. */
+/**
+ * The six sections of the single public page, in navigation order. `id` is the section id and the address hash
+ * (#menu); `href` is the link target (works from any page, e.g. the 404 page). The old page routes redirect here.
+ */
 export const PUBLIC_PAGES = [
-  { href: '/', label: 'Home' },
-  { href: '/menu', label: 'Menu' },
-  { href: '/plans', label: 'Plans & Pricing' },
-  { href: '/customize', label: 'Customize' },
-  { href: '/how-it-works', label: 'How it works' },
-  { href: '/about', label: 'About & Contact' },
+  { id: 'home', href: '/#home', label: 'Home' },
+  { id: 'menu', href: '/#menu', label: 'Menu' },
+  { id: 'plans', href: '/#plans', label: 'Plans & Pricing' },
+  { id: 'customize', href: '/#customize', label: 'Customize' },
+  { id: 'how', href: '/#how', label: 'How it works' },
+  { id: 'about', href: '/#about', label: 'About & Contact' },
 ] as const;
 
 interface PageMeta {
