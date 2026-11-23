@@ -10,3 +10,12 @@
 - **Impact:** one migration (`20261123000012_page_image_slots.sql`, allowed slot keys only), content layer, three public pages, header, admin Images screen. No new tables, policies or roles.
 - **Status:** implemented on `stage3/backend`; needs CEO acceptance with the Stage 3 milestone.
 
+
+## CR-004 — Website content and pricing aligned with the Tiffin Box app (Proposed)
+- **Requested by:** Engineering Lead, working session 2026-11-23, with the document "Tiffin Box Website — Full Spec to Match the App" (dated 23 Nov 2026, 10 pages). The document says it replaces the original Business & Website Brief. The PDF is not filed in this repo yet (the repo is currently public; file it in `intake/client/` once it is private again).
+- **Change (public site):** new pricing rule (plan meal = old price + Rs 50 service + Rs 150 delivery; cheapest meal Rs 500); a fifth plan, Starter (3 days, Rs 4,800), shown first; plan tags (New, Cheapest, Most popular); Student shown as a range (Rs 750–800); late-night meal (11 PM–1 AM, Rs 900 a night); breakfast add-on Rs 550 a day; "Who's eating?" section (just me, family or group, guests); Rs 150 delivery on custom orders with a worked example; delivery table with late-night, family and guest rows; two more "Who we serve" cards; FAQ grows from 7 to 12; Instagram QR in the footer; Urdu name; draft notes and question tags removed from public pages.
+- **Explicitly out:** live customer location; any free first meal.
+- **Conflicts with the approved PRD:** FR-07 required ONE confirmed Student price before publishing; the new document keeps a range. The Starter plan is not a weekly plan, so "weekly price" no longer fits every plan. Family/group and guest orders, and late-night meals, are not modelled in subscriptions or payments (FR-24..30): this CR changes what the site SAYS, not how the admin records such orders.
+- **Still needed from the client (per the document):** WhatsApp number, order hours, business name and address, delivery boundary, the story, real food photos, the logo file.
+- **Impact:** one migration (plan tag, price range, period label; delivery and late-night prices in pricing rules), a content update script for the draft tables, the content layer, all six public pages, footer, tests. Admin screens for the new plan fields are NOT part of this change.
+- **Status:** in progress on `stage3/backend`; needs CEO acceptance with the Stage 3 milestone.
